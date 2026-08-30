@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Hollywood Hits — player prototype</title>
+<style>
+:root{
+  --stage:#141110;
+  --card:#1E1917;
+  --edge:#332C27;
+  --chalk:#F6F1E7;
+  --smoke:#A0968A;
+  --flare:#FF6A13;
+  --sans:"Barlow","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --display:"Anton","Haettenschweiler","Arial Narrow",var(--sans);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:#0B0908;
+  font-family:var(--sans);
+  color:var(--chalk);
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;
+  padding:0;
+}
+
+/* ---------- device frame (desktop only) ---------- */
+.shell{width:100%;max-width:420px;background:var(--stage);min-height:100vh;position:relative;overflow:hidden}
+@media(min-width:520px){
+  body{padding:28px 16px 40px}
+  .shell{min-height:760px;height:760px;border-radius:26px;border:1px solid var(--edge)}
+}
+
+.screen{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  padding:22px 20px 26px;
+}
+.screen[hidden]{display:none}
+
+/* ---------- shared type ---------- */
+.wordmark{
+  font-family:var(--display);font-weight:400;
+  font-size:15px;letter-spacing:.14em;color:var(--flare);
+  text-transform:uppercase;
+}
+h1{
+  font-family:var(--display);font-weight:400;
+  font-size:clamp(38px,12vw,52px);line-height:.92;
+  margin:0;letter-spacing:.01em;text-transform:uppercase;
+}
+.lede{font-size:16px;line-height:1.5;color:var(--smoke);margin:14px 0 0;max-width:30ch}
+label{display:block;font-size:13px;color:var(--smoke);margin:0 0 7px}
+input{
+  width:100%;padding:15px 16px;font-family:var(--sans);font-size:18px;
+  background:var(--card);color:var(--chalk);
+  border:1px solid var(--edge);border-radius:3px;
+}
+input:focus{outline:2px solid var(--flare);outline-offset:1px;border-color:transparent}
+input::placeholder{color:#6B6259}
+
+.btn{
+  width:100%;padding:17px;font-family:var(--sans);font-size:17px;font-weight:600;
+  background:var(--flare);color:#141110;border:0;border-radius:3px;cursor:pointer;
+  letter-spacing:.01em;
+}
+.btn:disabled{background:var(--edge);color:#6B6259;cursor:default}
+.btn:focus-visible{outline:2px solid var(--chalk);outline-offset:2px}
+.btn-quiet{background:transparent;color:var(--smoke);border:1px solid var(--edge)}
+
+.spacer{flex:1}
+
+/* ---------- join ---------- */
+.rule{height:3px;background:var(--flare);width:56px;margin:20px 0 0}
+
+/* ---------- waiting room ---------- */
+.count{font-family:var(--display);font-size:64px;line-height:1;color:var(--chalk)}
+.roster{
+  margin-top:18px;border-top:1px solid var(--edge);
+  max-height:210px;overflow:hidden;position:relative;
+}
+.roster div{padding:9px 0;border-bottom:1px solid var(--edge);font-size:15px;color:var(--smoke)}
+.roster div span{color:var(--chalk)}
+
+/* ---------- question ---------- */
+.songbar{
+  display:flex;align-items:baseline;gap:9px;
+  padding-bottom:11px;border-bottom:1px solid var(--edge);
+}
+.songno{
+  font-family:var(--display);font-size:13px;color:var(--flare);
+  letter-spacing:.09em;flex:none;
+}
+.songmeta{font-size:13px;color:var(--smoke);line-height:1.35;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.songmeta b{font-weight:600;color:var(--chalk)}
+
+.prompt{
+  font-size:clamp(21px,5.6vw,25px);line-height:1.24;font-weight:600;
+  margin:18px 0 0;letter-spacing:-.005em;
+}
+.subprompt{font-size:15px;color:var(--smoke);margin:8px 0 0}
+
+/* timer */
+.timerwrap{margin:18px 0 0}
+.timertrack{height:6px;background:var(--edge);border-radius:0;overflow:hidden}
+.timerfill{height:100%;background:var(--chalk);width:100%;transform-origin:left}
+.timerfill.urgent{background:var(--flare)}
+.timerrow{display:flex;justify-content:space-between;margin-top:7px;font-size:12px;color:var(--smoke)}
+.timerrow b{color:var(--chalk);font-weight:600;font-variant-numeric:tabular-nums}
+
+/* answers */
+.answers{margin-top:auto;display:flex;flex-direction:column;gap:9px;padding-top:20px}
+.ans{
+  display:flex;align-items:stretch;width:100%;min-height:60px;
+  background:var(--card);border:1px solid var(--edge);border-radius:3px;
+  color:var(--chalk);font-family:var(--sans);font-size:16.5px;line-height:1.3;
+  text-align:left;cursor:pointer;padding:0;overflow:hidden;
+  transition:background .12s ease,border-color .12s ease,color .12s ease;
+}
+.ans .key{
+  flex:none;width:46px;display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:19px;color:var(--flare);
+  border-right:1px solid var(--edge);
+}
+.ans .txt{flex:1;display:flex;align-items:center;padding:12px 14px}
+.ans:focus-visible{outline:2px solid var(--flare);outline-offset:2px}
+
+.ans.picked{background:var(--chalk);color:var(--stage);border-color:var(--chalk)}
+.ans.picked .key{color:var(--stage);border-right-color:rgba(20,17,16,.22)}
+.ans.correct{background:var(--chalk);color:var(--stage);border-color:var(--chalk)}
+.ans.correct .key{background:var(--flare);color:var(--stage);border-right-color:transparent}
+.ans.missed{opacity:.34}
+.ans.wrong{border-color:var(--edge);color:var(--smoke)}
+.ans.wrong .key{color:var(--smoke);text-decoration:line-through}
+.ans[disabled]{cursor:default}
+
+/* ---------- reveal ---------- */
+.verdict{font-family:var(--display);font-size:clamp(34px,10vw,44px);line-height:1;margin:0;text-transform:uppercase}
+.verdict.miss{color:var(--smoke)}
+.points{font-size:17px;color:var(--flare);margin:10px 0 0;font-weight:600;font-variant-numeric:tabular-nums}
+.explain{font-size:15.5px;line-height:1.55;color:var(--smoke);margin:16px 0 0;
+  padding-top:16px;border-top:1px solid var(--edge)}
+.standing{margin-top:18px;font-size:14px;color:var(--smoke)}
+.standing b{color:var(--chalk);font-weight:600}
+
+/* ---------- leaderboard ---------- */
+.lb{margin-top:14px;border-top:1px solid var(--edge)}
+.lb div{
+  display:flex;align-items:center;gap:12px;padding:12px 0;
+  border-bottom:1px solid var(--edge);font-size:16px;
+}
+.lb .pos{font-family:var(--display);font-size:15px;color:var(--smoke);width:26px;flex:none}
+.lb .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--smoke)}
+.lb .pts{font-variant-numeric:tabular-nums;color:var(--smoke);font-size:15px}
+.lb .me .nm,.lb .me .pts{color:var(--chalk);font-weight:600}
+.lb .me .pos{color:var(--flare)}
+
+/* ---------- podium ---------- */
+.podium{display:flex;flex-direction:column;gap:11px;margin-top:22px}
+.pod{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--edge);border-radius:3px}
+.pod.first{background:var(--chalk);color:var(--stage);border-color:var(--chalk)}
+.pod .rank{font-family:var(--display);font-size:30px;line-height:1;flex:none;color:var(--flare)}
+.pod.first .rank{color:var(--stage)}
+.pod .who{flex:1;font-size:18px;font-weight:600}
+.pod .sc{font-variant-numeric:tabular-nums;font-size:15px;opacity:.72}
+
+/* ---------- operator panel ---------- */
+.ops{width:100%;max-width:420px;margin-top:18px;font-size:13px;color:var(--smoke)}
+.ops summary{cursor:pointer;padding:11px 14px;background:#16110F;border:1px solid var(--edge);border-radius:3px;color:var(--chalk)}
+.ops .body{border:1px solid var(--edge);border-top:0;padding:16px 14px;display:flex;flex-direction:column;gap:14px}
+.ops .row{display:flex;align-items:center;gap:12px}
+.ops .row label{margin:0;flex:1;color:var(--smoke)}
+.ops select,.ops input[type=range]{flex:1;min-width:0}
+.ops select{padding:8px;background:var(--card);color:var(--chalk);border:1px solid var(--edge);border-radius:3px;font-family:var(--sans)}
+.ops .val{font-variant-numeric:tabular-nums;color:var(--chalk);width:56px;text-align:right;flex:none}
+.ops .jump{display:flex;flex-wrap:wrap;gap:7px}
+.ops .jump button{padding:8px 11px;font-size:12.5px;background:var(--card);color:var(--smoke);border:1px solid var(--edge);border-radius:3px;cursor:pointer;font-family:var(--sans)}
+.ops .note{line-height:1.55;color:#6B6259}
+@media(max-width:519px){.ops{padding:0 16px 30px}}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ============ JOIN ============ -->
+  <section class="screen" id="s-join">
+    <div class="wordmark">Hollywood Hits</div>
+    <div class="spacer"></div>
+    <h1>Play along<br>from your seat</h1>
+    <div class="rule"></div>
+    <p class="lede">Twenty-three songs. Sixty questions. Answer fast — speed counts as much as knowing.</p>
+    <div class="spacer"></div>
+    <div style="margin-bottom:14px">
+      <label for="f-name">What should we call you on the leaderboard?</label>
+      <input id="f-name" maxlength="18" placeholder="Two words or fewer" autocomplete="off">
+    </div>
+    <button class="btn" id="b-join" disabled>Join the game</button>
+  </section>
+
+  <!-- ============ WAITING ROOM ============ -->
+  <section class="screen" id="s-lobby" hidden>
+    <div class="wordmark">Hollywood Hits</div>
+    <div class="spacer"></div>
+    <div class="count" id="lobby-count">1</div>
+    <p class="lede" style="margin-top:6px">playing tonight</p>
+    <div class="roster" id="roster"></div>
+    <div class="spacer"></div>
+    <p class="lede" id="lobby-msg">You're in, <b style="color:var(--chalk)"></b>. Keep your phone on your lap — the first question comes during the opening number.</p>
+  </section>
+
+  <!-- ============ QUESTION ============ -->
+  <section class="screen" id="s-q" hidden>
+    <div class="songbar">
+      <div class="songno" id="q-no">Q1</div>
+      <div class="songmeta" id="q-song"></div>
+    </div>
+    <p class="prompt" id="q-prompt"></p>
+    <div class="timerwrap">
+      <div class="timertrack"><div class="timerfill" id="q-fill"></div></div>
+      <div class="timerrow">
+        <span id="q-status">Answer now</span>
+        <b id="q-secs">15</b>
+      </div>
+    </div>
+    <div class="answers" id="q-answers"></div>
+  </section>
+
+  <!-- ============ REVEAL ============ -->
+  <section class="screen" id="s-reveal" hidden>
+    <div class="songbar">
+      <div class="songno" id="r-no">Q1</div>
+      <div class="songmeta" id="r-song"></div>
+    </div>
+    <div class="spacer"></div>
+    <h2 class="verdict" id="r-verdict">Correct</h2>
+    <div class="points" id="r-points"></div>
+    <p class="explain" id="r-explain"></p>
+    <div class="standing" id="r-standing"></div>
+    <div class="spacer"></div>
+    <div class="answers" id="r-answers" style="padding-top:0"></div>
+  </section>
+
+  <!-- ============ LEADERBOARD ============ -->
+  <section class="screen" id="s-lb" hidden>
+    <div class="wordmark">Standings</div>
+    <h1 style="font-size:34px;margin-top:12px" id="lb-title">After question 1</h1>
+    <div class="lb" id="lb-list"></div>
+    <div class="spacer"></div>
+    <p class="lede" id="lb-note"></p>
+  </section>
+
+  <!-- ============ FINALE ============ -->
+  <section class="screen" id="s-end" hidden>
+    <div class="wordmark">Hollywood Hits</div>
+    <div class="spacer"></div>
+    <h1>Tonight's<br>winners</h1>
+    <div class="podium" id="podium"></div>
+    <div class="spacer"></div>
+    <p class="lede" id="end-note"></p>
+    <button class="btn btn-quiet" id="b-again" style="margin-top:16px">Play the demo again</button>
+  </section>
+
+</div>
+
+<!-- ============ OPERATOR / TEST PANEL ============ -->
+<details class="ops">
+  <summary>Test controls</summary>
+  <div class="body">
+    <div class="row">
+      <label for="o-window">Answer window</label>
+      <input type="range" id="o-window" min="5" max="30" step="1" value="15">
+      <span class="val" id="o-window-v">15s</span>
+    </div>
+    <div class="row">
+      <label for="o-curve">Speed curve</label>
+      <select id="o-curve">
+        <option value="ease_out" selected>ease_out</option>
+        <option value="linear">linear</option>
+        <option value="step">step</option>
+      </select>
+    </div>
+    <div class="row">
+      <label for="o-bonus">Maximum speed bonus</label>
+      <input type="range" id="o-bonus" min="0" max="2000" step="100" value="1000">
+      <span class="val" id="o-bonus-v">1000</span>
+    </div>
+    <div class="jump">
+      <button data-jump="join">Join</button>
+      <button data-jump="lobby">Waiting room</button>
+      <button data-jump="q">Question</button>
+      <button data-jump="lb">Leaderboard</button>
+      <button data-jump="end">Winners</button>
+    </div>
+    <p class="note">Six of the sixty questions are loaded. Change the window and curve, then play a round to feel how the scoring lands — this is the fastest way to decide whether fifteen seconds is right.</p>
+  </div>
+</details>
+
+<script>
+/* ------------------------------------------------------------------
+   Content — six questions drawn from the 90s alternative pack
+------------------------------------------------------------------ */
+const SONGS = {
+  1:{t:"Would?",       f:"Singles",         y:1992},
+  6:{t:"Big Empty",    f:"The Crow",        y:1994},
+  11:{t:"Lovefool",    f:"Romeo + Juliet",  y:1996},
+  15:{t:"Miss Misery", f:"Good Will Hunting",y:1997},
+  17:{t:"Iris",        f:"City of Angels",  y:1998},
+  23:{t:"Wake Up",     f:"The Matrix",      y:1999}
+};
+
+const QUESTIONS = [
+  {song:1, prompt:"Which band recorded 'Would?' for the Singles soundtrack?",
+   answers:["Alice in Chains","Soundgarden","Mudhoney","Screaming Trees"], correct:0,
+   explain:"Written and sung by Jerry Cantrell and Layne Staley's band."},
+  {song:6, prompt:"The Crow's lead actor died in an accident during filming. Who was he?",
+   answers:["Brandon Lee","River Phoenix","Jason Lee","Bruce Lee"], correct:0,
+   explain:"Brandon Lee was the son of Bruce Lee."},
+  {song:11, prompt:"'Lovefool' is by which Swedish band?",
+   answers:["The Cardigans","The Wannadies","Ace of Base","Roxette"], correct:0,
+   explain:"The Wannadies are also Swedish and also on that soundtrack."},
+  {song:15, prompt:"Which song beat 'Miss Misery' for Best Original Song at the 1998 Oscars?",
+   answers:["My Heart Will Go On","Colors of the Wind","Because You Loved Me","That Thing You Do"], correct:0,
+   explain:"Elliott Smith performed at the ceremony in a white suit."},
+  {song:17, prompt:"City of Angels is an American remake of which German film?",
+   answers:["Wings of Desire","Run Lola Run","The Marriage of Maria Braun","Downfall"], correct:0,
+   explain:"Wim Wenders directed the 1987 original."},
+  {song:23, prompt:"'Wake Up' plays over the closing credits of which 1999 film?",
+   answers:["The Matrix","Fight Club","Dark City","eXistenZ"], correct:0,
+   explain:"Deftones and Ministry are also on that soundtrack."}
+];
+
+const BOTS = ["Dana R.","Marcus","Priya","Tall Steve","Row F Kev","Jo + Jo",
+              "Nadia","The Bergs","Curtis","Sam W.","Little Mo","Ines"];
+
+/* ------------------------------------------------------------------
+   Config (driven by the test panel)
+------------------------------------------------------------------ */
+const cfg = { windowMs:15000, curve:"ease_out", basePoints:1000, bonusMax:1000 };
+
+/* ------------------------------------------------------------------
+   State
+------------------------------------------------------------------ */
+let me = { name:"You", score:0 };
+let field = [];
+let qi = 0;
+let picked = null, lockedMs = null, tStart = 0, raf = null, ended = false;
+
+const $ = id => document.getElementById(id);
+const screens = {join:$("s-join"),lobby:$("s-lobby"),q:$("s-q"),reveal:$("s-reveal"),lb:$("s-lb"),end:$("s-end")};
+
+function show(name){
+  Object.values(screens).forEach(s => s.hidden = true);
+  screens[name].hidden = false;
+}
+
+/* ---------- scoring ---------- */
+function speedFactor(elapsed){
+  const r = Math.min(1, Math.max(0, elapsed / cfg.windowMs));
+  if(cfg.curve === "linear")  return 1 - r;
+  if(cfg.curve === "step")    return r <= .25 ? 1 : (r <= .60 ? .5 : 0);
+  return Math.pow(1 - r, 0.6);
+}
+function scoreFor(correct, elapsed){
+  if(!correct || elapsed === null) return 0;
+  return cfg.basePoints + Math.round(cfg.bonusMax * speedFactor(elapsed));
+}
+
+/* ---------- join ---------- */
+$("f-name").addEventListener("input", e => {
+  $("b-join").disabled = e.target.value.trim().length < 2;
+});
+$("f-name").addEventListener("keydown", e => {
+  if(e.key === "Enter" && !$("b-join").disabled) $("b-join").click();
+});
+
+$("b-join").addEventListener("click", () => {
+  me = { name: $("f-name").value.trim(), score:0 };
+  field = BOTS.map(n => ({ name:n, score:0 }));
+  qi = 0; ended = false;
+  enterLobby();
+});
+
+/* ---------- waiting room ---------- */
+function enterLobby(){
+  show("lobby");
+  $("lobby-msg").querySelector("b").textContent = me.name;
+  const roster = $("roster");
+  roster.innerHTML = "";
+  let shown = 0;
+  const names = [me.name, ...BOTS];
+  $("lobby-count").textContent = "1";
+
+  const tick = setInterval(() => {
+    if(shown >= names.length){
+      clearInterval(tick);
+      setTimeout(() => startQuestion(), 900);
+      return;
+    }
+    const d = document.createElement("div");
+    d.innerHTML = shown === 0
+      ? `<span>${esc(names[shown])}</span> — that's you`
+      : esc(names[shown]) + " joined";
+    roster.prepend(d);
+    shown++;
+    $("lobby-count").textContent = 180 + shown * 3;
+  }, 420);
+}
+
+/* ---------- question ---------- */
+function startQuestion(){
+  const q = QUESTIONS[qi], s = SONGS[q.song];
+  picked = null; lockedMs = null;
+
+  $("q-no").textContent = "Q" + (qi + 1);
+  $("q-song").innerHTML = `<b>${esc(s.t)}</b> · ${esc(s.f)}, ${s.y}`;
+  $("q-prompt").textContent = q.prompt;
+  $("q-status").textContent = "Answer now";
+  $("q-secs").textContent = Math.round(cfg.windowMs / 1000);
+
+  const fill = $("q-fill");
+  fill.classList.remove("urgent");
+  fill.style.transform = "scaleX(1)";
+
+  const wrap = $("q-answers");
+  wrap.innerHTML = "";
+  q.answers.forEach((text, i) => {
+    const b = document.createElement("button");
+    b.className = "ans";
+    b.innerHTML = `<span class="key">${"ABCD"[i]}</span><span class="txt">${esc(text)}</span>`;
+    b.addEventListener("click", () => lockIn(i, b));
+    wrap.appendChild(b);
+  });
+
+  show("q");
+  tStart = performance.now();
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(frame);
+}
+
+function frame(now){
+  const elapsed = now - tStart;
+  const left = Math.max(0, cfg.windowMs - elapsed);
+  const fill = $("q-fill");
+  fill.style.transform = "scaleX(" + (left / cfg.windowMs) + ")";
+  fill.classList.toggle("urgent", left < 5000);
+  $("q-secs").textContent = Math.ceil(left / 1000);
+  if(left <= 0){ reveal(); return; }
+  raf = requestAnimationFrame(frame);
+}
+
+function lockIn(i, btn){
+  if(picked !== null) return;
+  picked = i;
+  lockedMs = performance.now() - tStart;
+  [...$("q-answers").children].forEach((el, j) => {
+    el.disabled = true;
+    if(j === i) el.classList.add("picked"); else el.classList.add("missed");
+  });
+  $("q-status").textContent = "Locked in — sit tight";
+  setTimeout(reveal, 900);
+}
+
+/* ---------- reveal ---------- */
+function reveal(){
+  cancelAnimationFrame(raf);
+  const q = QUESTIONS[qi], s = SONGS[q.song];
+  const right = picked === q.correct;
+  const gained = scoreFor(right, picked === null ? null : lockedMs);
+  me.score += gained;
+
+  // bots answer with plausible accuracy and speed
+  field.forEach(b => {
+    const ok = Math.random() < .62;
+    const t = 1200 + Math.random() * (cfg.windowMs - 1500);
+    b.score += scoreFor(ok, ok ? t : null);
+  });
+
+  $("r-no").textContent = "Q" + (qi + 1);
+  $("r-song").innerHTML = `<b>${esc(s.t)}</b> · ${esc(s.f)}, ${s.y}`;
+
+  const v = $("r-verdict");
+  v.textContent = picked === null ? "Too slow" : (right ? "Correct" : "Not this time");
+  v.classList.toggle("miss", !right);
+
+  $("r-points").textContent = gained > 0
+    ? "+" + gained.toLocaleString() + " points"
+    : (picked === null ? "No answer recorded" : "No points");
+  $("r-explain").textContent = q.explain;
+
+  const wrap = $("r-answers");
+  wrap.innerHTML = "";
+  q.answers.forEach((text, i) => {
+    const b = document.createElement("button");
+    b.disabled = true;
+    b.className = "ans " + (i === q.correct ? "correct" : (i === picked ? "wrong" : "missed"));
+    b.innerHTML = `<span class="key">${"ABCD"[i]}</span><span class="txt">${esc(text)}</span>`;
+    wrap.appendChild(b);
+  });
+
+  const board = standings();
+  const pos = board.findIndex(p => p.me) + 1;
+  $("r-standing").innerHTML = `You're <b>${ordinal(pos)}</b> of ${board.length} with <b>${me.score.toLocaleString()}</b>`;
+
+  show("reveal");
+  setTimeout(showBoard, 3400);
+}
+
+/* ---------- leaderboard ---------- */
+function standings(){
+  return [...field.map(b => ({...b, me:false})), {...me, me:true}]
+    .sort((a,b) => b.score - a.score);
+}
+
+function showBoard(){
+  const board = standings();
+  const pos = board.findIndex(p => p.me) + 1;
+  $("lb-title").textContent = "After question " + (qi + 1);
+
+  const list = $("lb-list");
+  list.innerHTML = "";
+  const top = board.slice(0, 5);
+  if(pos > 5) top.push(board[pos - 1]);
+
+  top.forEach(p => {
+    const rank = board.indexOf(p) + 1;
+    const row = document.createElement("div");
+    if(p.me) row.className = "me";
+    row.innerHTML = `<span class="pos">${rank}</span>
+      <span class="nm">${esc(p.name)}${p.me ? " — you" : ""}</span>
+      <span class="pts">${p.score.toLocaleString()}</span>`;
+    list.appendChild(row);
+  });
+
+  const last = qi === QUESTIONS.length - 1;
+  $("lb-note").textContent = last
+    ? "That's the last question. Stay in your seat for the winners."
+    : (pos <= 3 ? "You're on the podium. Nine hundred people would like your seat."
+                : "Plenty of songs left. Speed is where the ground gets made up.");
+
+  show("lb");
+  setTimeout(() => {
+    qi++;
+    if(qi >= QUESTIONS.length) finish(); else startQuestion();
+  }, 3200);
+}
+
+/* ---------- finale ---------- */
+function finish(){
+  ended = true;
+  const board = standings();
+  const pod = $("podium");
+  pod.innerHTML = "";
+  board.slice(0,3).forEach((p, i) => {
+    const d = document.createElement("div");
+    d.className = "pod" + (i === 0 ? " first" : "");
+    d.innerHTML = `<span class="rank">${i+1}</span>
+      <span class="who">${esc(p.name)}${p.me ? " — you" : ""}</span>
+      <span class="sc">${p.score.toLocaleString()}</span>`;
+    pod.appendChild(d);
+  });
+  const pos = board.findIndex(p => p.me) + 1;
+  $("end-note").textContent = pos <= 3
+    ? "Come to the front of house — someone will find you."
+    : `You finished ${ordinal(pos)} of ${board.length} with ${me.score.toLocaleString()} points. Thanks for playing.`;
+  show("end");
+}
+
+$("b-again").addEventListener("click", () => {
+  me.score = 0; field.forEach(b => b.score = 0); qi = 0; ended = false;
+  startQuestion();
+});
+
+/* ---------- test controls ---------- */
+$("o-window").addEventListener("input", e => {
+  cfg.windowMs = e.target.value * 1000;
+  $("o-window-v").textContent = e.target.value + "s";
+});
+$("o-curve").addEventListener("change", e => cfg.curve = e.target.value);
+$("o-bonus").addEventListener("input", e => {
+  cfg.bonusMax = +e.target.value;
+  $("o-bonus-v").textContent = e.target.value;
+});
+document.querySelectorAll("[data-jump]").forEach(b => {
+  b.addEventListener("click", () => {
+    cancelAnimationFrame(raf);
+    const to = b.dataset.jump;
+    if(to === "q"){ qi = Math.min(qi, QUESTIONS.length - 1); startQuestion(); }
+    else if(to === "lb"){ showBoard(); }
+    else if(to === "end"){ finish(); }
+    else if(to === "lobby"){ enterLobby(); }
+    else show("join");
+  });
+});
+
+/* ---------- utils ---------- */
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function ordinal(n){
+  const s = ["th","st","nd","rd"], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+</script>
+</body>
+</html>
