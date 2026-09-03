@@ -2,607 +2,672 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Hollywood Hits — player prototype</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hollywood Hits — 90s Soundtrack Trivia</title>
 <style>
 :root{
-  --stage:#141110;
-  --card:#1E1917;
-  --edge:#332C27;
-  --chalk:#F6F1E7;
-  --smoke:#A0968A;
-  --flare:#FF6A13;
+  --stage:#141110; --card:#1E1917; --edge:#332C27;
+  --chalk:#F6F1E7; --smoke:#A0968A; --dimmer:#6B6259;
+  --flare:#FF6A13; --ok:#5CBF7E; --halt:#E5484D; --cool:#4DB6D0;
   --sans:"Barlow","Helvetica Neue",Helvetica,Arial,sans-serif;
-  --display:"Anton","Haettenschweiler","Arial Narrow",var(--sans);
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0}
-body{
-  background:#0B0908;
-  font-family:var(--sans);
-  color:var(--chalk);
-  min-height:100vh;
-  display:flex;flex-direction:column;align-items:center;
-  padding:0;
-}
+html,body{margin:0;background:#0B0908;color:var(--chalk);font-family:var(--sans)}
+body{min-height:100vh;display:flex;justify-content:center}
 
-/* ---------- device frame (desktop only) ---------- */
-.shell{width:100%;max-width:420px;background:var(--stage);min-height:100vh;position:relative;overflow:hidden}
-@media(min-width:520px){
-  body{padding:28px 16px 40px}
-  .shell{min-height:760px;height:760px;border-radius:26px;border:1px solid var(--edge)}
-}
+.shell{width:100%;max-width:460px;background:var(--stage);min-height:100vh;
+  padding:22px 20px 30px;display:flex;flex-direction:column}
+@media(min-width:520px){body{padding:24px 16px}
+  .shell{border:1px solid var(--edge);border-radius:22px;min-height:auto}}
 
-.screen{
-  position:absolute;inset:0;display:flex;flex-direction:column;
-  padding:22px 20px 26px;
-}
-.screen[hidden]{display:none}
+body.tv{padding:0;background:var(--stage)}
+body.tv .shell{max-width:none;width:100vw;height:100vh;border:0;border-radius:0;
+  padding:4vh 5vw;justify-content:center;overflow:hidden}
 
-/* ---------- shared type ---------- */
-.wordmark{
-  font-family:var(--display);font-weight:400;
-  font-size:15px;letter-spacing:.14em;color:var(--flare);
-  text-transform:uppercase;
-}
-h1{
-  font-family:var(--display);font-weight:400;
-  font-size:clamp(38px,12vw,52px);line-height:.92;
-  margin:0;letter-spacing:.01em;text-transform:uppercase;
-}
-.lede{font-size:16px;line-height:1.5;color:var(--smoke);margin:14px 0 0;max-width:30ch}
+.wordmark{font-size:12px;letter-spacing:.16em;color:var(--flare);text-transform:uppercase;font-weight:700}
+.tv .wordmark{font-size:1.5vw;letter-spacing:.2em}
+h1{font-size:34px;line-height:1.05;margin:14px 0 0;font-weight:700;letter-spacing:-.015em}
+h2{font-size:22px;margin:0 0 4px;font-weight:700}
+p.lede{color:var(--smoke);line-height:1.5;margin:12px 0 0;font-size:15px}
+.tv p.lede{font-size:1.8vw}
+.spacer{flex:1;min-height:16px}
+
 label{display:block;font-size:13px;color:var(--smoke);margin:0 0 7px}
-input{
-  width:100%;padding:15px 16px;font-family:var(--sans);font-size:18px;
-  background:var(--card);color:var(--chalk);
-  border:1px solid var(--edge);border-radius:3px;
-}
-input:focus{outline:2px solid var(--flare);outline-offset:1px;border-color:transparent}
-input::placeholder{color:#6B6259}
+input{width:100%;padding:15px 16px;font-size:18px;font-family:var(--sans);
+  background:var(--card);color:var(--chalk);border:1px solid var(--edge);border-radius:3px}
+input:focus{outline:2px solid var(--flare);outline-offset:1px}
+input.code{font-family:var(--mono);letter-spacing:.3em;text-transform:uppercase;text-align:center;font-size:26px}
 
-.btn{
-  width:100%;padding:17px;font-family:var(--sans);font-size:17px;font-weight:600;
-  background:var(--flare);color:#141110;border:0;border-radius:3px;cursor:pointer;
-  letter-spacing:.01em;
-}
-.btn:disabled{background:var(--edge);color:#6B6259;cursor:default}
-.btn:focus-visible{outline:2px solid var(--chalk);outline-offset:2px}
-.btn-quiet{background:transparent;color:var(--smoke);border:1px solid var(--edge)}
+.btn{width:100%;padding:16px;font-size:17px;font-weight:700;font-family:var(--sans);
+  background:var(--flare);color:#141110;border:0;border-radius:3px;cursor:pointer;margin-top:10px}
+.btn:disabled{background:var(--edge);color:var(--dimmer);cursor:default}
+.btn.quiet{background:transparent;color:var(--smoke);border:1px solid var(--edge)}
+.btn.go{background:var(--cool);color:#0C1417;font-size:20px;padding:22px}
+.btn.small{padding:12px;font-size:14px}
+.btn.danger{background:transparent;color:var(--halt);border:1px solid #4A2326}
 
-.spacer{flex:1}
-
-/* ---------- join ---------- */
-.rule{height:3px;background:var(--flare);width:56px;margin:20px 0 0}
-
-/* ---------- waiting room ---------- */
-.count{font-family:var(--display);font-size:64px;line-height:1;color:var(--chalk)}
-.roster{
-  margin-top:18px;border-top:1px solid var(--edge);
-  max-height:210px;overflow:hidden;position:relative;
-}
-.roster div{padding:9px 0;border-bottom:1px solid var(--edge);font-size:15px;color:var(--smoke)}
-.roster div span{color:var(--chalk)}
-
-/* ---------- question ---------- */
-.songbar{
-  display:flex;align-items:baseline;gap:9px;
-  padding-bottom:11px;border-bottom:1px solid var(--edge);
-}
-.songno{
-  font-family:var(--display);font-size:13px;color:var(--flare);
-  letter-spacing:.09em;flex:none;
-}
-.songmeta{font-size:13px;color:var(--smoke);line-height:1.35;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.songmeta b{font-weight:600;color:var(--chalk)}
-
-.prompt{
-  font-size:clamp(21px,5.6vw,25px);line-height:1.24;font-weight:600;
-  margin:18px 0 0;letter-spacing:-.005em;
-}
-.subprompt{font-size:15px;color:var(--smoke);margin:8px 0 0}
-
-/* timer */
-.timerwrap{margin:18px 0 0}
-.timertrack{height:6px;background:var(--edge);border-radius:0;overflow:hidden}
-.timerfill{height:100%;background:var(--chalk);width:100%;transform-origin:left}
-.timerfill.urgent{background:var(--flare)}
-.timerrow{display:flex;justify-content:space-between;margin-top:7px;font-size:12px;color:var(--smoke)}
-.timerrow b{color:var(--chalk);font-weight:600;font-variant-numeric:tabular-nums}
-
-/* answers */
-.answers{margin-top:auto;display:flex;flex-direction:column;gap:9px;padding-top:20px}
-.ans{
-  display:flex;align-items:stretch;width:100%;min-height:60px;
-  background:var(--card);border:1px solid var(--edge);border-radius:3px;
-  color:var(--chalk);font-family:var(--sans);font-size:16.5px;line-height:1.3;
-  text-align:left;cursor:pointer;padding:0;overflow:hidden;
-  transition:background .12s ease,border-color .12s ease,color .12s ease;
-}
-.ans .key{
-  flex:none;width:46px;display:flex;align-items:center;justify-content:center;
-  font-family:var(--display);font-size:19px;color:var(--flare);
-  border-right:1px solid var(--edge);
-}
-.ans .txt{flex:1;display:flex;align-items:center;padding:12px 14px}
-.ans:focus-visible{outline:2px solid var(--flare);outline-offset:2px}
-
-.ans.picked{background:var(--chalk);color:var(--stage);border-color:var(--chalk)}
-.ans.picked .key{color:var(--stage);border-right-color:rgba(20,17,16,.22)}
-.ans.correct{background:var(--chalk);color:var(--stage);border-color:var(--chalk)}
-.ans.correct .key{background:var(--flare);color:var(--stage);border-right-color:transparent}
-.ans.missed{opacity:.34}
-.ans.wrong{border-color:var(--edge);color:var(--smoke)}
-.ans.wrong .key{color:var(--smoke);text-decoration:line-through}
+.ans{display:flex;width:100%;min-height:62px;background:var(--card);
+  border:1px solid var(--edge);border-radius:3px;color:var(--chalk);
+  font-family:var(--sans);font-size:16.5px;text-align:left;cursor:pointer;
+  padding:0;overflow:hidden;margin-bottom:9px;transition:background .12s,color .12s}
+.ans .k{flex:none;width:46px;display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:17px;color:var(--flare);border-right:1px solid var(--edge)}
+.ans .t{flex:1;display:flex;align-items:center;padding:12px 14px;line-height:1.3}
+.ans.picked,.ans.correct{background:var(--chalk);color:var(--stage);border-color:var(--chalk)}
+.ans.picked .k,.ans.correct .k{color:var(--stage);border-right-color:rgba(20,17,16,.2)}
+.ans.correct .k{background:var(--flare)}
+.ans.dim{opacity:.32}
 .ans[disabled]{cursor:default}
+.ans.big .k{width:64px;font-size:24px}
+.ans.big{min-height:76px;font-size:19px}
 
-/* ---------- reveal ---------- */
-.verdict{font-family:var(--display);font-size:clamp(34px,10vw,44px);line-height:1;margin:0;text-transform:uppercase}
+.tvgrid{display:grid;grid-template-columns:1fr 1fr;gap:1.4vw;margin-top:3vh}
+.tvans{display:flex;background:var(--card);border:1px solid var(--edge);
+  border-radius:4px;overflow:hidden;min-height:9vh}
+.tvans .k{flex:none;width:6vw;display:flex;align-items:center;justify-content:center;
+  font-size:3vw;font-weight:700;color:var(--flare);border-right:1px solid var(--edge)}
+.tvans .t{flex:1;display:flex;align-items:center;padding:0 2vw;font-size:2.3vw;line-height:1.2}
+.tvans.correct{background:var(--chalk);color:var(--stage);border-color:var(--chalk)}
+.tvans.correct .k{background:var(--flare);color:var(--stage)}
+.tvans.dim{opacity:.3}
+
+.track{height:7px;background:var(--edge);overflow:hidden;margin-top:16px}
+.tv .track{height:1.4vh;margin-top:3vh}
+.fill{height:100%;background:var(--chalk);width:100%;transform-origin:left}
+.fill.urgent{background:var(--flare)}
+.trackrow{display:flex;justify-content:space-between;margin-top:7px;font-size:12px;color:var(--smoke)}
+.tv .trackrow{font-size:1.5vw;margin-top:1vh}
+.trackrow b{font-family:var(--mono);color:var(--chalk)}
+
+.big{font-size:60px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.verdict{font-size:32px;font-weight:700;margin:0}
 .verdict.miss{color:var(--smoke)}
-.points{font-size:17px;color:var(--flare);margin:10px 0 0;font-weight:600;font-variant-numeric:tabular-nums}
-.explain{font-size:15.5px;line-height:1.55;color:var(--smoke);margin:16px 0 0;
-  padding-top:16px;border-top:1px solid var(--edge)}
-.standing{margin-top:18px;font-size:14px;color:var(--smoke)}
-.standing b{color:var(--chalk);font-weight:600}
+.pts{color:var(--flare);font-weight:700;font-size:17px;margin-top:8px;font-variant-numeric:tabular-nums}
+.explain{color:var(--smoke);font-size:15px;line-height:1.55;margin-top:14px;
+  padding-top:14px;border-top:1px solid var(--edge)}
+.tv .explain{font-size:1.8vw;margin-top:3vh;padding-top:2vh}
 
-/* ---------- leaderboard ---------- */
-.lb{margin-top:14px;border-top:1px solid var(--edge)}
-.lb div{
-  display:flex;align-items:center;gap:12px;padding:12px 0;
-  border-bottom:1px solid var(--edge);font-size:16px;
-}
-.lb .pos{font-family:var(--display);font-size:15px;color:var(--smoke);width:26px;flex:none}
-.lb .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--smoke)}
-.lb .pts{font-variant-numeric:tabular-nums;color:var(--smoke);font-size:15px}
-.lb .me .nm,.lb .me .pts{color:var(--chalk);font-weight:600}
-.lb .me .pos{color:var(--flare)}
+.lb div{display:flex;gap:12px;align-items:center;padding:11px 0;
+  border-bottom:1px solid var(--edge);font-size:15.5px;color:var(--smoke)}
+.tv .lb div{font-size:2.1vw;padding:1.3vh 0}
+.lb .p{font-family:var(--mono);width:22px;flex:none;font-size:13px}
+.tv .lb .p{width:3vw;font-size:1.7vw}
+.lb .n{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb .s{font-family:var(--mono);font-size:14px}
+.tv .lb .s{font-size:1.9vw}
+.lb .me{color:var(--chalk);font-weight:700}
+.lb .me .p{color:var(--flare)}
 
-/* ---------- podium ---------- */
-.podium{display:flex;flex-direction:column;gap:11px;margin-top:22px}
-.pod{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--edge);border-radius:3px}
+.pod{display:flex;align-items:center;gap:14px;padding:16px;border:1px solid var(--edge);
+  border-radius:3px;margin-bottom:10px}
+.tv .pod{padding:2vh 2vw;margin-bottom:1.2vh}
 .pod.first{background:var(--chalk);color:var(--stage);border-color:var(--chalk)}
-.pod .rank{font-family:var(--display);font-size:30px;line-height:1;flex:none;color:var(--flare)}
-.pod.first .rank{color:var(--stage)}
-.pod .who{flex:1;font-size:18px;font-weight:600}
-.pod .sc{font-variant-numeric:tabular-nums;font-size:15px;opacity:.72}
+.pod .r{font-size:28px;font-weight:700;color:var(--flare);flex:none}
+.tv .pod .r{font-size:3.4vw}
+.pod.first .r{color:var(--stage)}
+.pod .w{flex:1;font-size:18px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tv .pod .w{font-size:2.8vw}
+.pod .s{font-family:var(--mono);font-size:14px;opacity:.7}
+.tv .pod .s{font-size:2vw}
 
-/* ---------- operator panel ---------- */
-.ops{width:100%;max-width:420px;margin-top:18px;font-size:13px;color:var(--smoke)}
-.ops summary{cursor:pointer;padding:11px 14px;background:#16110F;border:1px solid var(--edge);border-radius:3px;color:var(--chalk)}
-.ops .body{border:1px solid var(--edge);border-top:0;padding:16px 14px;display:flex;flex-direction:column;gap:14px}
-.ops .row{display:flex;align-items:center;gap:12px}
-.ops .row label{margin:0;flex:1;color:var(--smoke)}
-.ops select,.ops input[type=range]{flex:1;min-width:0}
-.ops select{padding:8px;background:var(--card);color:var(--chalk);border:1px solid var(--edge);border-radius:3px;font-family:var(--sans)}
-.ops .val{font-variant-numeric:tabular-nums;color:var(--chalk);width:56px;text-align:right;flex:none}
-.ops .jump{display:flex;flex-wrap:wrap;gap:7px}
-.ops .jump button{padding:8px 11px;font-size:12.5px;background:var(--card);color:var(--smoke);border:1px solid var(--edge);border-radius:3px;cursor:pointer;font-family:var(--sans)}
-.ops .note{line-height:1.55;color:#6B6259}
-@media(max-width:519px){.ops{padding:0 16px 30px}}
+.joinsplit{display:flex;gap:5vw;align-items:center;margin-top:3vh}
+.qrbox{background:#fff;padding:1.4vw;border-radius:6px;flex:none;line-height:0}
+.qrbox img,.qrbox canvas{display:block;width:22vh;height:22vh}
+.codebox{background:var(--card);border:1px solid var(--edge);border-radius:3px;
+  padding:18px;text-align:center;margin-top:16px}
+.codebox .c{font-family:var(--mono);font-size:42px;letter-spacing:.24em;font-weight:700}
+.tv .codebox .c{font-size:6vw}
+.codebox .l{font-size:12px;color:var(--smoke);letter-spacing:.1em;text-transform:uppercase}
+.tv .codebox .l{font-size:1.4vw}
+.urlline{font-family:var(--mono);font-size:1.2vw;color:var(--smoke);word-break:break-all;margin-top:1.5vh;line-height:1.5}
 
-@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.statusgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.stat{background:var(--card);border:1px solid var(--edge);border-radius:3px;padding:13px}
+.stat .l{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--dimmer)}
+.stat .v{font-family:var(--mono);font-size:24px;margin-top:5px}
+.qpreview{background:var(--card);border:1px solid var(--edge);border-radius:3px;
+  padding:14px;margin-top:14px;font-size:15px;line-height:1.4}
+.qpreview .c{color:var(--ok);font-size:13.5px;margin-top:8px}
+
+.diag{margin-top:18px;padding-top:14px;border-top:1px solid var(--edge);
+  font-family:var(--mono);font-size:11.5px;color:var(--dimmer);line-height:1.6}
+.tv .diag{position:fixed;bottom:1vh;right:1.5vw;border:0;margin:0;padding:0;font-size:.9vw}
+.diag b{color:var(--smoke);font-weight:400}
+.diag .bad{color:var(--halt)} .diag .good{color:var(--ok)} .diag .warn{color:var(--flare)}
+
+body.print{background:#fff;color:#111;padding:0}
+body.print .shell{background:#fff;border:0;border-radius:0;max-width:none;width:100%;padding:0}
+.cards{display:grid;grid-template-columns:1fr 1fr}
+.card{border:1px dashed #bbb;padding:14mm 10mm;text-align:center;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;min-height:120mm}
+.card .ttl{font-size:20pt;font-weight:700;color:#111}
+.card .sub{font-size:10.5pt;color:#555;margin-top:3mm;line-height:1.45;max-width:70mm}
+.card .qr{margin:6mm 0 4mm;line-height:0}
+.card .qr img,.card .qr canvas{width:38mm;height:38mm}
+.card .code{font-family:var(--mono);font-size:24pt;font-weight:700;letter-spacing:.22em;color:#111}
+.card .codel{font-size:8pt;letter-spacing:.14em;text-transform:uppercase;color:#777;margin-top:2mm}
+.printbar{padding:16px 20px;background:#111;color:#fff;display:flex;gap:10px;align-items:center}
+.printbar button{padding:10px 16px;font-family:var(--sans);font-size:14px;font-weight:700;
+  border:0;border-radius:3px;background:var(--flare);color:#141110;cursor:pointer}
+.printbar button.q{background:transparent;color:#bbb;border:1px solid #444}
+@media print{.printbar{display:none}.card{border-color:#ddd;break-inside:avoid}@page{margin:8mm}}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
+<div class="shell" id="app"><p class="lede">Loading…</p></div>
 
-<div class="shell">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-  <!-- ============ JOIN ============ -->
-  <section class="screen" id="s-join">
-    <div class="wordmark">Hollywood Hits</div>
-    <div class="spacer"></div>
-    <h1>Play along<br>from your seat</h1>
-    <div class="rule"></div>
-    <p class="lede">Twenty-three songs. Sixty questions. Answer fast — speed counts as much as knowing.</p>
-    <div class="spacer"></div>
-    <div style="margin-bottom:14px">
-      <label for="f-name">What should we call you on the leaderboard?</label>
-      <input id="f-name" maxlength="18" placeholder="Two words or fewer" autocomplete="off">
-    </div>
-    <button class="btn" id="b-join" disabled>Join the game</button>
-  </section>
+/* ================================================================
+   CONNECTION
+================================================================ */
+const SUPABASE_URL  = "https://ajeyetunvbjywbtvppmt.supabase.co";
+const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqZXlldHVudmJqeXdidHZwcG10Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzMTAyODQsImV4cCI6MjEwMzg4NjI4NH0.bhIi2xFfXiRydeTSm-3hsEOKdM7pagftqfL_z2xr53k";
 
-  <!-- ============ WAITING ROOM ============ -->
-  <section class="screen" id="s-lobby" hidden>
-    <div class="wordmark">Hollywood Hits</div>
-    <div class="spacer"></div>
-    <div class="count" id="lobby-count">1</div>
-    <p class="lede" style="margin-top:6px">playing tonight</p>
-    <div class="roster" id="roster"></div>
-    <div class="spacer"></div>
-    <p class="lede" id="lobby-msg">You're in, <b style="color:var(--chalk)"></b>. Keep your phone on your lap — the first question comes during the opening number.</p>
-  </section>
+const db = createClient(SUPABASE_URL, SUPABASE_ANON, {
+  realtime:{ params:{ eventsPerSecond: 10 } }
+});
 
-  <!-- ============ QUESTION ============ -->
-  <section class="screen" id="s-q" hidden>
-    <div class="songbar">
-      <div class="songno" id="q-no">Q1</div>
-      <div class="songmeta" id="q-song"></div>
-    </div>
-    <p class="prompt" id="q-prompt"></p>
-    <div class="timerwrap">
-      <div class="timertrack"><div class="timerfill" id="q-fill"></div></div>
-      <div class="timerrow">
-        <span id="q-status">Answer now</span>
-        <b id="q-secs">15</b>
-      </div>
-    </div>
-    <div class="answers" id="q-answers"></div>
-  </section>
-
-  <!-- ============ REVEAL ============ -->
-  <section class="screen" id="s-reveal" hidden>
-    <div class="songbar">
-      <div class="songno" id="r-no">Q1</div>
-      <div class="songmeta" id="r-song"></div>
-    </div>
-    <div class="spacer"></div>
-    <h2 class="verdict" id="r-verdict">Correct</h2>
-    <div class="points" id="r-points"></div>
-    <p class="explain" id="r-explain"></p>
-    <div class="standing" id="r-standing"></div>
-    <div class="spacer"></div>
-    <div class="answers" id="r-answers" style="padding-top:0"></div>
-  </section>
-
-  <!-- ============ LEADERBOARD ============ -->
-  <section class="screen" id="s-lb" hidden>
-    <div class="wordmark">Standings</div>
-    <h1 style="font-size:34px;margin-top:12px" id="lb-title">After question 1</h1>
-    <div class="lb" id="lb-list"></div>
-    <div class="spacer"></div>
-    <p class="lede" id="lb-note"></p>
-  </section>
-
-  <!-- ============ FINALE ============ -->
-  <section class="screen" id="s-end" hidden>
-    <div class="wordmark">Hollywood Hits</div>
-    <div class="spacer"></div>
-    <h1>Tonight's<br>winners</h1>
-    <div class="podium" id="podium"></div>
-    <div class="spacer"></div>
-    <p class="lede" id="end-note"></p>
-    <button class="btn btn-quiet" id="b-again" style="margin-top:16px">Play the demo again</button>
-  </section>
-
-</div>
-
-<!-- ============ OPERATOR / TEST PANEL ============ -->
-<details class="ops">
-  <summary>Test controls</summary>
-  <div class="body">
-    <div class="row">
-      <label for="o-window">Answer window</label>
-      <input type="range" id="o-window" min="5" max="30" step="1" value="15">
-      <span class="val" id="o-window-v">15s</span>
-    </div>
-    <div class="row">
-      <label for="o-curve">Speed curve</label>
-      <select id="o-curve">
-        <option value="ease_out" selected>ease_out</option>
-        <option value="linear">linear</option>
-        <option value="step">step</option>
-      </select>
-    </div>
-    <div class="row">
-      <label for="o-bonus">Maximum speed bonus</label>
-      <input type="range" id="o-bonus" min="0" max="2000" step="100" value="1000">
-      <span class="val" id="o-bonus-v">1000</span>
-    </div>
-    <div class="jump">
-      <button data-jump="join">Join</button>
-      <button data-jump="lobby">Waiting room</button>
-      <button data-jump="q">Question</button>
-      <button data-jump="lb">Leaderboard</button>
-      <button data-jump="end">Winners</button>
-    </div>
-    <p class="note">Six of the sixty questions are loaded. Change the window and curve, then play a round to feel how the scoring lands — this is the fastest way to decide whether fifteen seconds is right.</p>
-  </div>
-</details>
-
-<script>
-/* ------------------------------------------------------------------
-   Content — six questions drawn from the 90s alternative pack
------------------------------------------------------------------- */
-const SONGS = {
-  1:{t:"Would?",       f:"Singles",         y:1992},
-  6:{t:"Big Empty",    f:"The Crow",        y:1994},
-  11:{t:"Lovefool",    f:"Romeo + Juliet",  y:1996},
-  15:{t:"Miss Misery", f:"Good Will Hunting",y:1997},
-  17:{t:"Iris",        f:"City of Angels",  y:1998},
-  23:{t:"Wake Up",     f:"The Matrix",      y:1999}
-};
-
-const QUESTIONS = [
-  {song:1, prompt:"Which band recorded 'Would?' for the Singles soundtrack?",
-   answers:["Alice in Chains","Soundgarden","Mudhoney","Screaming Trees"], correct:0,
-   explain:"Written and sung by Jerry Cantrell and Layne Staley's band."},
-  {song:6, prompt:"The Crow's lead actor died in an accident during filming. Who was he?",
-   answers:["Brandon Lee","River Phoenix","Jason Lee","Bruce Lee"], correct:0,
-   explain:"Brandon Lee was the son of Bruce Lee."},
-  {song:11, prompt:"'Lovefool' is by which Swedish band?",
-   answers:["The Cardigans","The Wannadies","Ace of Base","Roxette"], correct:0,
-   explain:"The Wannadies are also Swedish and also on that soundtrack."},
-  {song:15, prompt:"Which song beat 'Miss Misery' for Best Original Song at the 1998 Oscars?",
-   answers:["My Heart Will Go On","Colors of the Wind","Because You Loved Me","That Thing You Do"], correct:0,
-   explain:"Elliott Smith performed at the ceremony in a white suit."},
-  {song:17, prompt:"City of Angels is an American remake of which German film?",
-   answers:["Wings of Desire","Run Lola Run","The Marriage of Maria Braun","Downfall"], correct:0,
-   explain:"Wim Wenders directed the 1987 original."},
-  {song:23, prompt:"'Wake Up' plays over the closing credits of which 1999 film?",
-   answers:["The Matrix","Fight Club","Dark City","eXistenZ"], correct:0,
-   explain:"Deftones and Ministry are also on that soundtrack."}
+/* ================================================================
+   CONTENT
+================================================================ */
+const QS=[
+ {q:"Which band recorded 'Would?' for the Singles soundtrack?",
+  a:["Alice in Chains","Soundgarden","Mudhoney","Screaming Trees"],c:0,
+  e:"Written by Jerry Cantrell as a tribute to Andrew Wood."},
+ {q:"The Crow's lead actor died in an accident during filming. Who was he?",
+  a:["Brandon Lee","River Phoenix","Jason Lee","Bruce Lee"],c:0,
+  e:"Brandon Lee was the son of Bruce Lee."},
+ {q:"'Lovefool' is by which Swedish band?",
+  a:["The Cardigans","The Wannadies","Ace of Base","Roxette"],c:0,
+  e:"The Wannadies are also Swedish and also on that soundtrack."},
+ {q:"Which song beat 'Miss Misery' for Best Original Song at the 1998 Oscars?",
+  a:["My Heart Will Go On","Colors of the Wind","Because You Loved Me","That Thing You Do"],c:0,
+  e:"Elliott Smith performed at the ceremony in a white suit."},
+ {q:"City of Angels is an American remake of which German film?",
+  a:["Wings of Desire","Run Lola Run","The Marriage of Maria Braun","Downfall"],c:0,
+  e:"Wim Wenders directed the 1987 original."},
+ {q:"Radiohead wrote 'Exit Music (For a Film)' for the credits of which film?",
+  a:["Romeo + Juliet","Trainspotting","The Beach","Clockers"],c:0,
+  e:"It later appeared on OK Computer."},
+ {q:"'Dammit' featured in which 1998 teen comedy?",
+  a:["Can't Hardly Wait","American Pie","Varsity Blues","She's All That"],c:0,
+  e:"The film takes its title from a Replacements song."},
+ {q:"'Wake Up' plays over the closing credits of which 1999 film?",
+  a:["The Matrix","Fight Club","Dark City","eXistenZ"],c:0,
+  e:"Deftones and Ministry are also on that soundtrack."},
+ {q:"Garbage's drummer produced Nirvana's Nevermind. Who is he?",
+  a:["Butch Vig","Steve Albini","Jack Endino","Rick Rubin"],c:0,
+  e:"Albini produced In Utero; Endino produced Bleach."},
+ {q:"'Bitter Sweet Symphony' led to a royalties dispute with which band?",
+  a:["The Rolling Stones","The Beatles","The Kinks","The Who"],c:0,
+  e:"The rights were signed back to Richard Ashcroft in 2019."}
 ];
 
-const BOTS = ["Dana R.","Marcus","Priya","Tall Steve","Row F Kev","Jo + Jo",
-              "Nadia","The Bergs","Curtis","Sam W.","Little Mo","Ines"];
+const WINDOW_MS=15000, BASE=1000, BONUS=1000;
 
-/* ------------------------------------------------------------------
-   Config (driven by the test panel)
------------------------------------------------------------------- */
-const cfg = { windowMs:15000, curve:"ease_out", basePoints:1000, bonusMax:1000 };
+/* ================================================================
+   STATE
+================================================================ */
+const app=document.getElementById("app");
+let role=null, room="", meId=null, myName="", myScore=0, earned={};
+let state=null, players=[], picked=null, raf=null, chan=null, connected=false, lastErr="";
 
-/* ------------------------------------------------------------------
-   State
------------------------------------------------------------------- */
-let me = { name:"You", score:0 };
-let field = [];
-let qi = 0;
-let picked = null, lockedMs = null, tStart = 0, raf = null, ended = false;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const bonus=ms=>Math.round(BONUS*Math.pow(Math.max(0,1-ms/WINDOW_MS),.6));
+const tvMode=on=>document.body.classList.toggle("tv",on);
 
-const $ = id => document.getElementById(id);
-const screens = {join:$("s-join"),lobby:$("s-lobby"),q:$("s-q"),reveal:$("s-reveal"),lb:$("s-lb"),end:$("s-end")};
+function diag(){
+  const d=document.getElementById("diag"); if(!d) return;
+  d.innerHTML=`db <b class="${connected?"good":"warn"}">${connected?"connected":"connecting…"}</b>`
+    +(room?` · room <b>${esc(room)}</b>`:"")
+    +(players.length?` · <b>${players.length}</b> in`:"")
+    +(lastErr?` · <b class="bad">${esc(lastErr).slice(0,44)}</b>`:"");
+}
+function fail(msg){ lastErr=msg; diag(); console.error("[trivia]",msg); }
+function stopClock(){ cancelAnimationFrame(raf); }
+async function unsub(){ if(chan){ await db.removeChannel(chan); chan=null; } }
 
-function show(name){
-  Object.values(screens).forEach(s => s.hidden = true);
-  screens[name].hidden = false;
+function storedId(){ try{ return localStorage.getItem("hh_id"); }catch(e){ return null; } }
+function storeId(id,name,rm){ try{
+  localStorage.setItem("hh_id",id); localStorage.setItem("hh_name",name); localStorage.setItem("hh_room",rm);
+}catch(e){} }
+
+/* ================================================================
+   DATA
+================================================================ */
+async function loadRoom(code){
+  const {data,error}=await db.from("rooms").select("*").eq("code",code).maybeSingle();
+  if(error){ fail(error.message); return null; }
+  connected=true; return data;
+}
+async function upsertRoom(code,patch){
+  const {data,error}=await db.from("rooms")
+    .upsert({code,...patch,updated_at:new Date().toISOString()}).select().single();
+  if(error){ fail(error.message); return null; }
+  connected=true; return data;
+}
+async function loadPlayers(code){
+  const {data,error}=await db.from("players").select("*").eq("room_code",code)
+    .order("score",{ascending:false});
+  if(error){ fail(error.message); return players; }
+  connected=true; return data||[];
 }
 
-/* ---------- scoring ---------- */
-function speedFactor(elapsed){
-  const r = Math.min(1, Math.max(0, elapsed / cfg.windowMs));
-  if(cfg.curve === "linear")  return 1 - r;
-  if(cfg.curve === "step")    return r <= .25 ? 1 : (r <= .60 ? .5 : 0);
-  return Math.pow(1 - r, 0.6);
-}
-function scoreFor(correct, elapsed){
-  if(!correct || elapsed === null) return 0;
-  return cfg.basePoints + Math.round(cfg.bonusMax * speedFactor(elapsed));
+function subscribe(code,onRoom,onPlayers){
+  chan=db.channel("room:"+code)
+    .on("postgres_changes",{event:"*",schema:"public",table:"rooms",filter:"code=eq."+code},
+      p=>{ if(p.new) onRoom(p.new); })
+    .on("postgres_changes",{event:"*",schema:"public",table:"players",filter:"room_code=eq."+code},
+      async()=>{ players=await loadPlayers(code); onPlayers(); })
+    .subscribe(s=>{ connected = (s==="SUBSCRIBED"); diag(); });
 }
 
-/* ---------- join ---------- */
-$("f-name").addEventListener("input", e => {
-  $("b-join").disabled = e.target.value.trim().length < 2;
-});
-$("f-name").addEventListener("keydown", e => {
-  if(e.key === "Enter" && !$("b-join").disabled) $("b-join").click();
-});
+/* ================================================================
+   LANDING
+================================================================ */
+function landing(){
+  stopClock(); unsub(); tvMode(false); document.body.className="";
+  app.innerHTML=`
+    <div class="wordmark">Hollywood Hits</div>
+    <h1>90s soundtrack trivia</h1>
+    <p class="lede">Questions on the TV. Everyone answers on their own phone. You run it from yours.</p>
+    <div class="spacer"></div>
+    <button class="btn" id="b-tv">Big screen — start here</button>
+    <button class="btn quiet" id="b-host">Host controls</button>
+    <button class="btn quiet" id="b-join">Join the game</button>
+    <button class="btn quiet small" id="b-print">Print table cards</button>
+    <p class="lede" style="font-size:13.5px">Open the big screen on the laptop plugged into the TV, then take host controls on your phone with the same room code.</p>
+    <div class="diag" id="diag"></div>`;
+  document.getElementById("b-tv").onclick=setupScreen;
+  document.getElementById("b-host").onclick=setupHost;
+  document.getElementById("b-join").onclick=()=>setupJoin();
+  document.getElementById("b-print").onclick=setupPrint;
+  diag();
+}
 
-$("b-join").addEventListener("click", () => {
-  me = { name: $("f-name").value.trim(), score:0 };
-  field = BOTS.map(n => ({ name:n, score:0 }));
-  qi = 0; ended = false;
-  enterLobby();
-});
+function codeEntry(title,note,cta,defaultCode,go){
+  tvMode(false); document.body.className="";
+  app.innerHTML=`
+    <div class="wordmark">Hollywood Hits</div>
+    <h1>${title}</h1>
+    <p class="lede">${note}</p>
+    <div style="margin-top:22px">
+      <input id="f-room" class="code" maxlength="4" autocomplete="off" value="${esc(defaultCode||"")}" placeholder="····">
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" id="b-go">${cta}</button>
+    <button class="btn quiet" id="b-back">Back</button>
+    <div class="diag" id="diag"></div>`;
+  diag();
+  const f=document.getElementById("f-room");
+  document.getElementById("b-back").onclick=landing;
+  document.getElementById("b-go").onclick=()=>{
+    const v=f.value.trim().toUpperCase();
+    if(v.length!==4) return alert("Room code needs to be four letters.");
+    go(v);
+  };
+  f.onkeydown=e=>{ if(e.key==="Enter") document.getElementById("b-go").click(); };
+}
 
-/* ---------- waiting room ---------- */
-function enterLobby(){
-  show("lobby");
-  $("lobby-msg").querySelector("b").textContent = me.name;
-  const roster = $("roster");
-  roster.innerHTML = "";
-  let shown = 0;
-  const names = [me.name, ...BOTS];
-  $("lobby-count").textContent = "1";
+/* ================================================================
+   BIG SCREEN
+================================================================ */
+function setupScreen(){
+  codeEntry("Pick a room code",
+    "Four letters. Keep the same one every week and your printed table cards stay valid.",
+    "Open the waiting room","TRIV",startScreen);
+}
 
-  const tick = setInterval(() => {
-    if(shown >= names.length){
-      clearInterval(tick);
-      setTimeout(() => startQuestion(), 900);
+async function startScreen(code){
+  role="display"; room=code;
+  const r=await upsertRoom(code,{phase:"lobby",qi:-1,started_at:null});
+  if(!r) return;
+  state=r;
+  players=await loadPlayers(code);
+  tvMode(true);
+  subscribe(code, x=>{ state=x; screenView(); }, ()=>screenPaint());
+  screenView();
+}
+
+function screenView(){
+  const ph=state.phase, q=QS[state.qi];
+  let b="";
+  if(ph==="lobby"){
+    b=`<div class="wordmark">Hollywood Hits · 90s soundtrack trivia</div>
+      <h1 style="font-size:4.6vw;margin-top:2vh">Play along from your phone</h1>
+      <div class="joinsplit">
+        <div class="qrbox" id="qr"></div>
+        <div style="flex:1;min-width:0">
+          <div class="codebox"><div class="l">Room code</div><div class="c">${esc(room)}</div></div>
+          <div class="urlline">${esc(location.origin+location.pathname)}</div>
+          <p class="lede">Scan the code, choose a name, wait for question one.</p>
+        </div>
+      </div>
+      <div style="margin-top:3vh;display:flex;align-items:baseline;gap:1.5vw">
+        <span class="big" style="font-size:6vw" id="d-count">${players.length}</span>
+        <span class="lede">players in</span>
+      </div>`;
+  } else if(ph==="question"){
+    b=`<div class="wordmark">Question ${state.qi+1} of ${QS.length}</div>
+      <h1 style="font-size:3.6vw;line-height:1.2;margin-top:2vh">${esc(q.q)}</h1>
+      <div class="tvgrid">${q.a.map((t,i)=>
+        `<div class="tvans"><span class="k">${"ABCD"[i]}</span><span class="t">${esc(t)}</span></div>`).join("")}</div>
+      <div class="track"><div class="fill" id="d-fill"></div></div>
+      <div class="trackrow"><span><b id="d-count">${players.length}</b> playing</span><b id="d-secs">15.0</b></div>`;
+  } else if(ph==="reveal"){
+    b=`<div class="wordmark">Question ${state.qi+1}</div>
+      <h1 style="font-size:3.2vw;line-height:1.2;margin-top:2vh">${esc(q.q)}</h1>
+      <div class="tvgrid">${q.a.map((t,i)=>
+        `<div class="tvans ${i===q.c?"correct":"dim"}"><span class="k">${"ABCD"[i]}</span><span class="t">${esc(t)}</span></div>`).join("")}</div>
+      <p class="explain">${esc(q.e)}</p>`;
+  } else {
+    b=`<div class="wordmark">${ph==="done"?"Final scores":"Standings"}</div>
+      <h1 style="font-size:4.2vw;margin-top:1vh">${ph==="done"?"Tonight's winners":"After question "+(state.qi+1)}</h1>
+      <div id="d-lb" style="margin-top:2vh"></div>`;
+  }
+  app.innerHTML=b+`<div class="diag" id="diag"></div>`;
+  diag();
+  if(ph==="lobby") makeQR("qr",location.origin+location.pathname+"#"+room);
+  if(ph==="question") runClock(document.getElementById("d-fill"),document.getElementById("d-secs"));
+  screenPaint();
+}
+
+function screenPaint(){
+  const c=document.getElementById("d-count"); if(c) c.textContent=players.length;
+  if(state.phase==="board"||state.phase==="done") paintBoard("d-lb",null,10);
+  diag();
+}
+
+function makeQR(id,url){
+  const el=document.getElementById(id); if(!el) return;
+  if(window.QRCode){ try{ new QRCode(el,{text:url,width:300,height:300,correctLevel:QRCode.CorrectLevel.M}); return; }catch(e){} }
+  el.outerHTML=`<div style="flex:none;width:22vh;height:22vh;display:flex;align-items:center;
+    justify-content:center;border:1px dashed var(--edge);border-radius:6px;color:var(--dimmer);
+    font-size:1.2vw;text-align:center;padding:1vw">QR unavailable —<br>read the link out</div>`;
+}
+
+/* ================================================================
+   HOST
+================================================================ */
+function setupHost(){
+  codeEntry("Host controls","Enter the room code showing on the TV.","Take control","TRIV",startHost);
+}
+
+async function startHost(code){
+  const r=await loadRoom(code);
+  if(!r){ alert("No room with that code. Start the big screen first."); return; }
+  role="host"; room=code; state=r;
+  players=await loadPlayers(code);
+  subscribe(code, x=>{ state=x; hostView(); },
+    ()=>{ const c=document.getElementById("h-count"); if(c) c.textContent=players.length; diag(); });
+  hostView();
+}
+
+function hostView(){
+  const ph=state.phase, q=QS[state.qi], nq=QS[state.qi+1];
+  const label = ph==="lobby" ? "Start — question 1"
+    : ph==="question" ? "Reveal the answer"
+    : ph==="reveal" ? (state.qi+1>=QS.length?"Final scores":"Show standings")
+    : ph==="board" ? "Question "+(state.qi+2) : "";
+  const phaseName={lobby:"Waiting room",question:"Question live",reveal:"Answer showing",
+    board:"Standings showing",done:"Game over"}[ph];
+
+  app.innerHTML=`
+    <div class="wordmark">Host · room ${esc(room)}</div>
+    <h2 style="margin-top:12px">${phaseName}</h2>
+    <div class="statusgrid">
+      <div class="stat"><div class="l">Players</div><div class="v" id="h-count">${players.length}</div></div>
+      <div class="stat"><div class="l">Question</div><div class="v">${state.qi<0?"—":(state.qi+1)+"/"+QS.length}</div></div>
+    </div>
+    ${(ph==="question"||ph==="reveal")?`<div class="qpreview">${esc(q.q)}
+      <div class="c">Correct: ${"ABCD"[q.c]} — ${esc(q.a[q.c])}</div></div>`:""}
+    ${((ph==="lobby"||ph==="board")&&nq)?`<div class="qpreview" style="color:var(--smoke)">Next: ${esc(nq.q)}</div>`:""}
+    <div class="spacer"></div>
+    ${ph==="done"
+      ? `<button class="btn go" id="b-restart">Start a new game</button>`
+      : `<button class="btn go" id="b-go">${label}</button>`}
+    <button class="btn danger small" id="b-reset">Reset scores</button>
+    <div class="diag" id="diag"></div>`;
+  diag();
+  const go=document.getElementById("b-go"); if(go) go.onclick=advance;
+  const rs=document.getElementById("b-restart"); if(rs) rs.onclick=restart;
+  document.getElementById("b-reset").onclick=async()=>{
+    if(confirm("Zero everyone's score and go back to the waiting room?")) await restart();
+  };
+}
+
+async function advance(){
+  const ph=state.phase;
+  let patch;
+  if(ph==="lobby"||ph==="board") patch={phase:"question",qi:state.qi+1,started_at:new Date().toISOString()};
+  else if(ph==="question") patch={phase:"reveal"};
+  else if(ph==="reveal") patch={phase:(state.qi+1>=QS.length)?"done":"board"};
+  else return;
+  const r=await upsertRoom(room,patch);
+  if(r){ state=r; hostView(); }
+}
+
+async function restart(){
+  const {error}=await db.from("players").update({score:0}).eq("room_code",room);
+  if(error) fail(error.message);
+  const r=await upsertRoom(room,{phase:"lobby",qi:-1,started_at:null});
+  if(r){ state=r; players=await loadPlayers(room); hostView(); }
+}
+
+/* ================================================================
+   PLAYER
+================================================================ */
+function setupJoin(prefill){
+  tvMode(false); document.body.className="";
+  app.innerHTML=`
+    <div class="wordmark">Hollywood Hits</div>
+    <h1>Join the game</h1>
+    <div style="margin-top:22px"${prefill?" hidden":""}>
+      <label for="f-code">Room code from the card on your table</label>
+      <input id="f-code" class="code" maxlength="4" autocomplete="off" placeholder="····" value="${esc(prefill||"")}">
+    </div>
+    <div style="margin-top:16px">
+      <label for="f-name">Your name for the leaderboard</label>
+      <input id="f-name" maxlength="16" autocomplete="off" placeholder="Two words or fewer">
+    </div>
+    <div class="spacer"></div>
+    <button class="btn" id="b-in" disabled>Join</button>
+    <button class="btn quiet" id="b-back">Back</button>
+    <div class="diag" id="diag"></div>`;
+  diag();
+  const code=document.getElementById("f-code"), name=document.getElementById("f-name"), b=document.getElementById("b-in");
+  const chk=()=>b.disabled=!(code.value.trim().length===4 && name.value.trim().length>=2);
+  code.oninput=name.oninput=chk;
+  try{ const n=localStorage.getItem("hh_name"); if(n){ name.value=n; chk(); } }catch(e){}
+  if(prefill) name.focus();
+  name.onkeydown=e=>{ if(e.key==="Enter"&&!b.disabled) b.click(); };
+  document.getElementById("b-back").onclick=landing;
+  b.onclick=async()=>{
+    b.disabled=true; b.textContent="Joining…";
+    const ok=await joinGame(code.value.trim().toUpperCase(), name.value.trim());
+    if(!ok){ b.disabled=false; b.textContent="Join"; }
+  };
+}
+
+async function joinGame(code,name){
+  const r=await loadRoom(code);
+  if(!r){ alert("No game with that code. Check the card or the TV."); return false; }
+  role="player"; room=code; myName=name; state=r;
+
+  const prev=storedId();
+  let row=null;
+  if(prev){
+    const {data}=await db.from("players").select("*").eq("id",prev).eq("room_code",code).maybeSingle();
+    row=data||null;
+  }
+  if(row){
+    myScore=row.score; meId=row.id;
+    await db.from("players").update({name,updated_at:new Date().toISOString()}).eq("id",row.id);
+  } else {
+    const {data,error}=await db.from("players").insert({room_code:code,name,score:0}).select().single();
+    if(error){ fail(error.message); alert("Couldn't join — "+error.message); return false; }
+    meId=data.id; myScore=0;
+  }
+  storeId(meId,name,code);
+  players=await loadPlayers(code);
+  subscribe(code, x=>{
+    const changed = (x.phase!==state.phase || x.qi!==state.qi);
+    state=x;
+    if(changed){ if(x.phase==="question") picked=null; playerView(); }
+  }, ()=>{ if(state.phase==="board"||state.phase==="done") paintBoard("p-lb",meId,5); diag(); });
+  playerView();
+  return true;
+}
+
+function playerView(){
+  const ph=state.phase, q=QS[state.qi];
+  let b="";
+  if(ph==="lobby"){
+    b=`<div class="wordmark">Hollywood Hits</div><div class="spacer"></div>
+      <h1>You're in,<br>${esc(myName)}</h1>
+      <p class="lede">Watch the screen. First question shortly.</p><div class="spacer"></div>`;
+  } else if(ph==="question"){
+    const done=picked!==null;
+    b=`<div class="wordmark">Question ${state.qi+1} of ${QS.length}</div>
+      <h2 style="margin-top:12px;font-size:19px;line-height:1.3;color:var(--smoke);font-weight:400">${esc(q.q)}</h2>
+      <div class="track"><div class="fill" id="p-fill"></div></div>
+      <div class="trackrow"><span id="p-note">${done?"Locked in":"Tap your answer"}</span><b id="p-secs">15.0</b></div>
+      <div class="spacer"></div>
+      <div id="p-answers">${q.a.map((t,i)=>
+        `<button class="ans big${done?(i===picked?" picked":" dim"):""}" data-i="${i}"${done?" disabled":""}>
+          <span class="k">${"ABCD"[i]}</span><span class="t">${esc(t)}</span></button>`).join("")}</div>`;
+  } else if(ph==="reveal"){
+    const right=picked===q.c, g=earned[state.qi]??0;
+    b=`<div class="wordmark">Question ${state.qi+1}</div><div class="spacer"></div>
+      <p class="verdict${right?"":" miss"}">${(picked===null||picked===-1)?"Too slow":(right?"Correct":"Not this time")}</p>
+      <div class="pts">${g>0?"+"+g.toLocaleString()+" points":"No points"}</div>
+      <p class="explain">${esc(q.e)}</p><div class="spacer"></div>
+      <div>${q.a.map((t,i)=>
+        `<button class="ans ${i===q.c?"correct":(i===picked?"":"dim")}" disabled>
+          <span class="k">${"ABCD"[i]}</span><span class="t">${esc(t)}</span></button>`).join("")}</div>`;
+  } else {
+    b=`<h2>${ph==="done"?"Final scores":"Standings"}</h2>
+      <p class="lede">You have <b style="color:var(--chalk)">${myScore.toLocaleString()}</b> points.</p>
+      <div id="p-lb" style="margin-top:14px"></div><div class="spacer"></div>`;
+  }
+  app.innerHTML=b+`<div class="diag" id="diag"></div>`;
+  diag();
+  if(ph==="question"){
+    runClock(document.getElementById("p-fill"),document.getElementById("p-secs"));
+    document.querySelectorAll("#p-answers .ans").forEach(x=>x.onclick=()=>lockIn(+x.dataset.i));
+  }
+  if(ph==="board"||ph==="done") paintBoard("p-lb",meId,5);
+}
+
+async function lockIn(i){
+  if(picked!==null) return;
+  picked=i;
+  const ms=Date.now()-new Date(state.started_at).getTime();
+  const g=(i===QS[state.qi].c && ms<=WINDOW_MS) ? BASE+bonus(ms) : 0;
+  earned[state.qi]=g; myScore+=g;
+  playerView();
+  const {error}=await db.from("players")
+    .update({score:myScore,updated_at:new Date().toISOString()}).eq("id",meId);
+  if(error) fail(error.message);
+}
+
+/* ================================================================
+   SHARED
+================================================================ */
+function paintBoard(elId,highlight,limit){
+  const el=document.getElementById(elId); if(!el) return;
+  const all=[...players].sort((a,b)=>b.score-a.score);
+  if(!all.length){ el.innerHTML=`<div style="color:var(--dimmer)">No scores yet.</div>`; return; }
+
+  if(state.phase==="done" && role==="display"){
+    el.innerHTML=all.slice(0,3).map((p,i)=>
+      `<div class="pod${i===0?" first":""}"><span class="r">${i+1}</span>
+       <span class="w">${esc(p.name)}</span><span class="s">${p.score.toLocaleString()}</span></div>`).join("")
+      +`<div class="lb">${all.slice(3,8).map((p,i)=>
+        `<div><span class="p">${i+4}</span><span class="n">${esc(p.name)}</span>
+         <span class="s">${p.score.toLocaleString()}</span></div>`).join("")}</div>`;
+    return;
+  }
+  const mineIx=all.findIndex(p=>p.id===highlight);
+  const show=all.slice(0,limit);
+  if(highlight && mineIx>=limit) show.push(all[mineIx]);
+  el.innerHTML=`<div class="lb">${show.map(p=>{
+    const r=all.indexOf(p)+1;
+    return `<div class="${p.id===highlight?"me":""}"><span class="p">${r}</span>
+      <span class="n">${esc(p.name)}${p.id===highlight?" — you":""}</span>
+      <span class="s">${p.score.toLocaleString()}</span></div>`;
+  }).join("")}</div>`;
+}
+
+function runClock(fill,secs){
+  cancelAnimationFrame(raf);
+  if(!state.started_at||!fill) return;
+  const t0=new Date(state.started_at).getTime();
+  const step=()=>{
+    if(!fill.isConnected) return;
+    const left=Math.max(0,WINDOW_MS-(Date.now()-t0));
+    fill.style.transform="scaleX("+(left/WINDOW_MS)+")";
+    fill.classList.toggle("urgent",left<5000);
+    if(secs) secs.textContent=(left/1000).toFixed(1);
+    if(left<=0){
+      if(role==="player" && picked===null){
+        picked=-1;
+        const n=document.getElementById("p-note"); if(n) n.textContent="Window closed";
+        document.querySelectorAll("#p-answers .ans").forEach(b=>{b.disabled=true;b.classList.add("dim");});
+      }
       return;
     }
-    const d = document.createElement("div");
-    d.innerHTML = shown === 0
-      ? `<span>${esc(names[shown])}</span> — that's you`
-      : esc(names[shown]) + " joined";
-    roster.prepend(d);
-    shown++;
-    $("lobby-count").textContent = 180 + shown * 3;
-  }, 420);
+    raf=requestAnimationFrame(step);
+  };
+  step();
 }
 
-/* ---------- question ---------- */
-function startQuestion(){
-  const q = QUESTIONS[qi], s = SONGS[q.song];
-  picked = null; lockedMs = null;
-
-  $("q-no").textContent = "Q" + (qi + 1);
-  $("q-song").innerHTML = `<b>${esc(s.t)}</b> · ${esc(s.f)}, ${s.y}`;
-  $("q-prompt").textContent = q.prompt;
-  $("q-status").textContent = "Answer now";
-  $("q-secs").textContent = Math.round(cfg.windowMs / 1000);
-
-  const fill = $("q-fill");
-  fill.classList.remove("urgent");
-  fill.style.transform = "scaleX(1)";
-
-  const wrap = $("q-answers");
-  wrap.innerHTML = "";
-  q.answers.forEach((text, i) => {
-    const b = document.createElement("button");
-    b.className = "ans";
-    b.innerHTML = `<span class="key">${"ABCD"[i]}</span><span class="txt">${esc(text)}</span>`;
-    b.addEventListener("click", () => lockIn(i, b));
-    wrap.appendChild(b);
-  });
-
-  show("q");
-  tStart = performance.now();
-  cancelAnimationFrame(raf);
-  raf = requestAnimationFrame(frame);
+/* ================================================================
+   PRINTABLE TABLE CARDS
+================================================================ */
+function setupPrint(){
+  codeEntry("Print table cards","Six per page. Scanning takes people straight to the name box.",
+    "Make the cards","TRIV",renderCards);
 }
 
-function frame(now){
-  const elapsed = now - tStart;
-  const left = Math.max(0, cfg.windowMs - elapsed);
-  const fill = $("q-fill");
-  fill.style.transform = "scaleX(" + (left / cfg.windowMs) + ")";
-  fill.classList.toggle("urgent", left < 5000);
-  $("q-secs").textContent = Math.ceil(left / 1000);
-  if(left <= 0){ reveal(); return; }
-  raf = requestAnimationFrame(frame);
+function renderCards(code){
+  const url=location.origin+location.pathname+"#"+code;
+  document.body.className="print";
+  app.innerHTML=`
+    <div class="printbar">
+      <button id="p-print">Print these</button>
+      <button class="q" id="p-back">Back</button>
+      <span style="font-size:13px;color:#999">Six cards · room ${esc(code)}</span>
+    </div>
+    <div class="cards">${Array.from({length:6},(_,i)=>`
+      <div class="card">
+        <div class="ttl">90s Soundtrack Trivia</div>
+        <div class="sub">Play along on your phone. Scan the code, pick a name, wait for the first question.</div>
+        <div class="qr" id="qr${i}"></div>
+        <div class="code">${esc(code)}</div>
+        <div class="codel">Room code</div>
+      </div>`).join("")}</div>`;
+  document.getElementById("p-print").onclick=()=>window.print();
+  document.getElementById("p-back").onclick=landing;
+  for(let i=0;i<6;i++){
+    const el=document.getElementById("qr"+i);
+    if(window.QRCode){ try{ new QRCode(el,{text:url,width:220,height:220,correctLevel:QRCode.CorrectLevel.M}); continue; }catch(e){} }
+    el.outerHTML=`<div style="font-family:monospace;font-size:7pt;color:#333;word-break:break-all;
+      max-width:60mm;margin:6mm 0 4mm;line-height:1.4">${esc(url)}</div>`;
+  }
 }
 
-function lockIn(i, btn){
-  if(picked !== null) return;
-  picked = i;
-  lockedMs = performance.now() - tStart;
-  [...$("q-answers").children].forEach((el, j) => {
-    el.disabled = true;
-    if(j === i) el.classList.add("picked"); else el.classList.add("missed");
-  });
-  $("q-status").textContent = "Locked in — sit tight";
-  setTimeout(reveal, 900);
-}
-
-/* ---------- reveal ---------- */
-function reveal(){
-  cancelAnimationFrame(raf);
-  const q = QUESTIONS[qi], s = SONGS[q.song];
-  const right = picked === q.correct;
-  const gained = scoreFor(right, picked === null ? null : lockedMs);
-  me.score += gained;
-
-  // bots answer with plausible accuracy and speed
-  field.forEach(b => {
-    const ok = Math.random() < .62;
-    const t = 1200 + Math.random() * (cfg.windowMs - 1500);
-    b.score += scoreFor(ok, ok ? t : null);
-  });
-
-  $("r-no").textContent = "Q" + (qi + 1);
-  $("r-song").innerHTML = `<b>${esc(s.t)}</b> · ${esc(s.f)}, ${s.y}`;
-
-  const v = $("r-verdict");
-  v.textContent = picked === null ? "Too slow" : (right ? "Correct" : "Not this time");
-  v.classList.toggle("miss", !right);
-
-  $("r-points").textContent = gained > 0
-    ? "+" + gained.toLocaleString() + " points"
-    : (picked === null ? "No answer recorded" : "No points");
-  $("r-explain").textContent = q.explain;
-
-  const wrap = $("r-answers");
-  wrap.innerHTML = "";
-  q.answers.forEach((text, i) => {
-    const b = document.createElement("button");
-    b.disabled = true;
-    b.className = "ans " + (i === q.correct ? "correct" : (i === picked ? "wrong" : "missed"));
-    b.innerHTML = `<span class="key">${"ABCD"[i]}</span><span class="txt">${esc(text)}</span>`;
-    wrap.appendChild(b);
-  });
-
-  const board = standings();
-  const pos = board.findIndex(p => p.me) + 1;
-  $("r-standing").innerHTML = `You're <b>${ordinal(pos)}</b> of ${board.length} with <b>${me.score.toLocaleString()}</b>`;
-
-  show("reveal");
-  setTimeout(showBoard, 3400);
-}
-
-/* ---------- leaderboard ---------- */
-function standings(){
-  return [...field.map(b => ({...b, me:false})), {...me, me:true}]
-    .sort((a,b) => b.score - a.score);
-}
-
-function showBoard(){
-  const board = standings();
-  const pos = board.findIndex(p => p.me) + 1;
-  $("lb-title").textContent = "After question " + (qi + 1);
-
-  const list = $("lb-list");
-  list.innerHTML = "";
-  const top = board.slice(0, 5);
-  if(pos > 5) top.push(board[pos - 1]);
-
-  top.forEach(p => {
-    const rank = board.indexOf(p) + 1;
-    const row = document.createElement("div");
-    if(p.me) row.className = "me";
-    row.innerHTML = `<span class="pos">${rank}</span>
-      <span class="nm">${esc(p.name)}${p.me ? " — you" : ""}</span>
-      <span class="pts">${p.score.toLocaleString()}</span>`;
-    list.appendChild(row);
-  });
-
-  const last = qi === QUESTIONS.length - 1;
-  $("lb-note").textContent = last
-    ? "That's the last question. Stay in your seat for the winners."
-    : (pos <= 3 ? "You're on the podium. Nine hundred people would like your seat."
-                : "Plenty of songs left. Speed is where the ground gets made up.");
-
-  show("lb");
-  setTimeout(() => {
-    qi++;
-    if(qi >= QUESTIONS.length) finish(); else startQuestion();
-  }, 3200);
-}
-
-/* ---------- finale ---------- */
-function finish(){
-  ended = true;
-  const board = standings();
-  const pod = $("podium");
-  pod.innerHTML = "";
-  board.slice(0,3).forEach((p, i) => {
-    const d = document.createElement("div");
-    d.className = "pod" + (i === 0 ? " first" : "");
-    d.innerHTML = `<span class="rank">${i+1}</span>
-      <span class="who">${esc(p.name)}${p.me ? " — you" : ""}</span>
-      <span class="sc">${p.score.toLocaleString()}</span>`;
-    pod.appendChild(d);
-  });
-  const pos = board.findIndex(p => p.me) + 1;
-  $("end-note").textContent = pos <= 3
-    ? "Come to the front of house — someone will find you."
-    : `You finished ${ordinal(pos)} of ${board.length} with ${me.score.toLocaleString()} points. Thanks for playing.`;
-  show("end");
-}
-
-$("b-again").addEventListener("click", () => {
-  me.score = 0; field.forEach(b => b.score = 0); qi = 0; ended = false;
-  startQuestion();
-});
-
-/* ---------- test controls ---------- */
-$("o-window").addEventListener("input", e => {
-  cfg.windowMs = e.target.value * 1000;
-  $("o-window-v").textContent = e.target.value + "s";
-});
-$("o-curve").addEventListener("change", e => cfg.curve = e.target.value);
-$("o-bonus").addEventListener("input", e => {
-  cfg.bonusMax = +e.target.value;
-  $("o-bonus-v").textContent = e.target.value;
-});
-document.querySelectorAll("[data-jump]").forEach(b => {
-  b.addEventListener("click", () => {
-    cancelAnimationFrame(raf);
-    const to = b.dataset.jump;
-    if(to === "q"){ qi = Math.min(qi, QUESTIONS.length - 1); startQuestion(); }
-    else if(to === "lb"){ showBoard(); }
-    else if(to === "end"){ finish(); }
-    else if(to === "lobby"){ enterLobby(); }
-    else show("join");
-  });
-});
-
-/* ---------- utils ---------- */
-function esc(s){ return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
-function ordinal(n){
-  const s = ["th","st","nd","rd"], v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-}
+/* ================================================================
+   BOOT
+================================================================ */
+window.addEventListener("hashchange",()=>location.reload());
+const hash=(location.hash||"").replace("#","").trim().toUpperCase();
+if(hash.length===4) setupJoin(hash); else landing();
 </script>
 </body>
 </html>
