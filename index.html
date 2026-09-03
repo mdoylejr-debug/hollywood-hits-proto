@@ -176,36 +176,149 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON, {
    CONTENT
 ================================================================ */
 const QS=[
- {q:"Which band recorded 'Would?' for the Singles soundtrack?",
-  a:["Alice in Chains","Soundgarden","Mudhoney","Screaming Trees"],c:0,
-  e:"Written by Jerry Cantrell as a tribute to Andrew Wood."},
- {q:"The Crow's lead actor died in an accident during filming. Who was he?",
-  a:["Brandon Lee","River Phoenix","Jason Lee","Bruce Lee"],c:0,
-  e:"Brandon Lee was the son of Bruce Lee."},
- {q:"'Lovefool' is by which Swedish band?",
-  a:["The Cardigans","The Wannadies","Ace of Base","Roxette"],c:0,
-  e:"The Wannadies are also Swedish and also on that soundtrack."},
- {q:"Which song beat 'Miss Misery' for Best Original Song at the 1998 Oscars?",
-  a:["My Heart Will Go On","Colors of the Wind","Because You Loved Me","That Thing You Do"],c:0,
-  e:"Elliott Smith performed at the ceremony in a white suit."},
- {q:"City of Angels is an American remake of which German film?",
-  a:["Wings of Desire","Run Lola Run","The Marriage of Maria Braun","Downfall"],c:0,
-  e:"Wim Wenders directed the 1987 original."},
- {q:"Radiohead wrote 'Exit Music (For a Film)' for the credits of which film?",
-  a:["Romeo + Juliet","Trainspotting","The Beach","Clockers"],c:0,
-  e:"It later appeared on OK Computer."},
- {q:"'Dammit' featured in which 1998 teen comedy?",
-  a:["Can't Hardly Wait","American Pie","Varsity Blues","She's All That"],c:0,
-  e:"The film takes its title from a Replacements song."},
- {q:"'Wake Up' plays over the closing credits of which 1999 film?",
-  a:["The Matrix","Fight Club","Dark City","eXistenZ"],c:0,
-  e:"Deftones and Ministry are also on that soundtrack."},
- {q:"Garbage's drummer produced Nirvana's Nevermind. Who is he?",
-  a:["Butch Vig","Steve Albini","Jack Endino","Rick Rubin"],c:0,
-  e:"Albini produced In Utero; Endino produced Bleach."},
- {q:"'Bitter Sweet Symphony' led to a royalties dispute with which band?",
-  a:["The Rolling Stones","The Beatles","The Kinks","The Who"],c:0,
-  e:"The rights were signed back to Richard Ashcroft in 2019."}
+ /* ---------- 1. All Star — Shrek ---------- */
+ {q:"\"All Star\" by Smash Mouth opens which 2001 animated film?",
+  a:["Shrek","Monsters, Inc.","Ice Age","Toy Story 2"],c:0,
+  e:"Smash Mouth released it in 1999, but Shrek made it inescapable."},
+ {q:"Which band recorded \"Come and Get Your Love\", heard over the opening of Guardians of the Galaxy?",
+  a:["Redbone","War","Rare Earth","The Isley Brothers"],c:0,
+  e:"Redbone released it in 1974; the film revived it forty years later."},
+ {q:"Nick Lowe's \"Cruel to Be Kind\" appears in which 1999 teen comedy?",
+  a:["10 Things I Hate About You","She's All That","Never Been Kissed","Drive Me Crazy"],c:0,
+  e:"The film transplants The Taming of the Shrew to a Seattle high school."},
+ {q:"Which band recorded \"Don't You (Forget About Me)\" for The Breakfast Club?",
+  a:["Simple Minds","Tears for Fears","Ultravox","The Psychedelic Furs"],c:0,
+  e:"Simple Minds turned the song down at first and had to be talked into it."},
+ {q:"\"Eye of the Tiger\" was written for which film?",
+  a:["Rocky III","Rocky II","Rocky IV","Raging Bull"],c:0,
+  e:"Sylvester Stallone approached Survivor after failing to license a Queen track."},
+ {q:"Irene Cara sang the title song of which 1980 film about a performing arts school?",
+  a:["Fame","Flashdance","A Chorus Line","Footloose"],c:0,
+  e:"It won the Academy Award for Best Original Song."},
+ {q:"Which film features \"Flashdance... What a Feeling\"?",
+  a:["Flashdance","Fame","Dirty Dancing","Staying Alive"],c:0,
+  e:"Irene Cara co-wrote it and won an Oscar for it, three years after Fame."},
+ {q:"Who performed the title song from Footloose?",
+  a:["Kenny Loggins","Bonnie Tyler","Deniece Williams","Shalamar"],c:0,
+  e:"All four artists appear on that soundtrack."},
+ {q:"Who recorded the theme from Ghostbusters?",
+  a:["Ray Parker Jr.","Huey Lewis","Lionel Richie","Rick James"],c:0,
+  e:"Huey Lewis later sued over its resemblance to \"I Want a New Drug\"."},
+ {q:"Frankie Valli sang the title song from Grease. Who wrote it?",
+  a:["Barry Gibb","John Farrar","Jim Jacobs","Frankie Valli"],c:0,
+  e:"Barry Gibb of the Bee Gees, at the height of their run."},
+ {q:"\"Happy\" by Pharrell Williams was written for which film?",
+  a:["Despicable Me 2","Minions","The Lego Movie","Sing"],c:0,
+  e:"It spent ten weeks at number one on the Billboard Hot 100."},
+ {q:"Which film ends with \"(I've Had) The Time of My Life\"?",
+  a:["Dirty Dancing","Footloose","Flashdance","Staying Alive"],c:0,
+  e:"Bill Medley and Jennifer Warnes sang it; it won the Oscar."},
+ {q:"\"Let's Go Crazy\" opens which 1984 Prince film?",
+  a:["Purple Rain","Under the Cherry Moon","Graffiti Bridge","Sign o' the Times"],c:0,
+  e:"Prince stars as The Kid, in a story loosely drawn from his own."},
+ {q:"Rascal Flatts covered \"Life Is a Highway\" for which 2006 animated film?",
+  a:["Cars","Over the Hedge","Ice Age: The Meltdown","Open Season"],c:0,
+  e:"Tom Cochrane wrote and recorded the original in 1991."},
+ {q:"Which film opens with Iggy Pop's \"Lust for Life\"?",
+  a:["Trainspotting","Sid and Nancy","Shallow Grave","Human Traffic"],c:0,
+  e:"Danny Boyle directed both Trainspotting and Shallow Grave."},
+ {q:"The musical Mamma Mia! is built on the songs of which group?",
+  a:["ABBA","Queen","The Bee Gees","Blondie"],c:0,
+  e:"The stage show ran for years before the 2008 film."},
+ {q:"Roy Orbison's \"Oh, Pretty Woman\" gave its name to which 1990 film?",
+  a:["Pretty Woman","Working Girl","Overboard","Big Business"],c:0,
+  e:"Orbison recorded it in 1964, twenty-six years before the film."},
+ {q:"Huey Lewis and the News recorded \"The Power of Love\" for which film?",
+  a:["Back to the Future","Ghostbusters","Weird Science","Teen Wolf"],c:0,
+  e:"Huey Lewis cameos as the teacher who rejects Marty's band audition."},
+ {q:"The film Pretty in Pink took its name from a song by which band?",
+  a:["The Psychedelic Furs","Simple Minds","Echo & the Bunnymen","New Order"],c:0,
+  e:"The band re-recorded the song for the film."},
+ {q:"Who sang \"St. Elmo's Fire (Man in Motion)\"?",
+  a:["John Parr","John Waite","John Cafferty","Jon Anderson"],c:0,
+  e:"Written with David Foster, and a US number one in 1985."},
+ {q:"\"Stayin' Alive\" opens which 1977 film?",
+  a:["Saturday Night Fever","Grease","Car Wash","Thank God It's Friday"],c:0,
+  e:"The opening shot follows John Travolta's shoes down a Brooklyn street."},
+ {q:"\"Time Warp\" comes from which film?",
+  a:["The Rocky Horror Picture Show","Hair","Tommy","Phantom of the Paradise"],c:0,
+  e:"Richard O'Brien wrote it, and plays Riff Raff in the film."},
+ {q:"Dolly Parton wrote and sang \"9 to 5\" for a film she also starred in. Who were her co-stars?",
+  a:["Jane Fonda and Lily Tomlin","Goldie Hawn and Bette Midler",
+     "Sally Field and Shirley MacLaine","Diane Keaton and Bette Midler"],c:0,
+  e:"Parton reportedly wrote the song on set, using her acrylic nails for rhythm."},
+
+ /* ---------- 24 onwards ---------- */
+ {q:"Celine Dion's \"My Heart Will Go On\" is the theme from which film?",
+  a:["Titanic","The Perfect Storm","Message in a Bottle","Pearl Harbor"],c:0,
+  e:"James Cameron initially didn't want a pop song in the film at all."},
+ {q:"Whitney Houston's \"I Will Always Love You\" came from which 1992 film?",
+  a:["The Bodyguard","Waiting to Exhale","Boomerang","The Preacher's Wife"],c:0,
+  e:"Dolly Parton wrote and first recorded it in 1973."},
+ {q:"\"Danger Zone\" is most associated with which 1986 film?",
+  a:["Top Gun","Iron Eagle","Firefox","Days of Thunder"],c:0,
+  e:"Kenny Loggins sang it after several other artists passed."},
+ {q:"Tom Cruise dances in his socks and underwear to which song in Risky Business?",
+  a:["Old Time Rock and Roll","Born to Run","Jailhouse Rock","Twist and Shout"],c:0,
+  e:"Bob Seger's 1978 track, and the scene that made the film famous."},
+ {q:"\"Unchained Melody\" soundtracks the pottery wheel scene in which 1990 film?",
+  a:["Ghost","Always","Truly Madly Deeply","Field of Dreams"],c:0,
+  e:"The Righteous Brothers recorded it in 1965; the film sent it back up the charts."},
+ {q:"Seal's \"Kiss from a Rose\" featured in which 1995 film?",
+  a:["Batman Forever","Batman Returns","Judge Dredd","The Crow"],c:0,
+  e:"It went on to win the Grammy for Record of the Year."},
+ {q:"\"Lose Yourself\" was written for which 2002 film?",
+  a:["8 Mile","Get Rich or Die Tryin'","Hustle & Flow","Brown Sugar"],c:0,
+  e:"The first hip-hop track to win Best Original Song at the Oscars."},
+ {q:"Bruce Springsteen won an Academy Award for a song written for which 1993 film?",
+  a:["Philadelphia","In the Name of the Father","The Firm","Schindler's List"],c:0,
+  e:"\"Streets of Philadelphia\" also took four Grammys."},
+ {q:"Coolio's \"Gangsta's Paradise\" came from which 1995 film?",
+  a:["Dangerous Minds","Clockers","Higher Learning","Kids"],c:0,
+  e:"It samples Stevie Wonder's \"Pastime Paradise\" from 1976."},
+ {q:"Will Smith recorded the theme song for which of his own films?",
+  a:["Men in Black","Independence Day","Bad Boys","Enemy of the State"],c:0,
+  e:"It borrows heavily from Patrice Rushen's \"Forget Me Nots\"."},
+ {q:"A car full of friends headbangs to \"Bohemian Rhapsody\" in which 1992 comedy?",
+  a:["Wayne's World","Encino Man","Airheads","Bill & Ted's Bogus Journey"],c:0,
+  e:"The scene returned the song to the US top ten, seventeen years after release."},
+ {q:"Which Quentin Tarantino film uses \"Stuck in the Middle with You\"?",
+  a:["Reservoir Dogs","Pulp Fiction","Jackie Brown","True Romance"],c:0,
+  e:"Stealers Wheel, 1972, in what became the film's most notorious scene."},
+ {q:"Dick Dale's surf guitar version of \"Misirlou\" opens which 1994 film?",
+  a:["Pulp Fiction","Reservoir Dogs","Natural Born Killers","The Endless Summer"],c:0,
+  e:"The tune is far older — a Greek and Middle Eastern folk melody."},
+ {q:"\"Born to Be Wild\" is tied forever to which 1969 road movie?",
+  a:["Easy Rider","Midnight Cowboy","Vanishing Point","Bonnie and Clyde"],c:0,
+  e:"Steppenwolf's lyric gave the phrase \"heavy metal\" to rock criticism."},
+ {q:"\"Raindrops Keep Fallin' on My Head\" won an Oscar from which 1969 western?",
+  a:["Butch Cassidy and the Sundance Kid","True Grit","The Wild Bunch",
+     "Once Upon a Time in the West"],c:0,
+  e:"Written by Burt Bacharach and Hal David, sung by B.J. Thomas."},
+ {q:"Audrey Hepburn sings \"Moon River\" on a fire escape in which film?",
+  a:["Breakfast at Tiffany's","Roman Holiday","Funny Face","Charade"],c:0,
+  e:"Henry Mancini wrote the music, Johnny Mercer the words."},
+ {q:"\"Over the Rainbow\" comes from which 1939 film?",
+  a:["The Wizard of Oz","Gone with the Wind","Babes in Arms","Snow White"],c:0,
+  e:"It was nearly cut from the film for slowing down the opening."},
+ {q:"\"Circle of Life\" opens which 1994 animated film?",
+  a:["The Lion King","Aladdin","Pocahontas","The Jungle Book"],c:0,
+  e:"Elton John wrote the music and Tim Rice the lyrics."},
+ {q:"\"A Whole New World\" is the love theme from which Disney film?",
+  a:["Aladdin","The Little Mermaid","Beauty and the Beast","Hercules"],c:0,
+  e:"Alan Menken and Tim Rice; it won Best Original Song in 1993."},
+ {q:"Who provided the singing voice for \"Let It Go\" in Frozen?",
+  a:["Idina Menzel","Kristen Bell","Demi Lovato","Auli'i Cravalho"],c:0,
+  e:"Demi Lovato recorded the pop version heard over the end credits."},
+ {q:"\"Shallow\" is from which 2018 film?",
+  a:["A Star Is Born","Bohemian Rhapsody","Rocketman","Vox Lux"],c:0,
+  e:"Lady Gaga and Bradley Cooper performed it; it won Best Original Song."},
+ {q:"Adele recorded the theme for which James Bond film?",
+  a:["Skyfall","Spectre","Quantum of Solace","No Time to Die"],c:0,
+  e:"The first Bond theme ever to win an Academy Award."},
+ {q:"Glenn Frey's \"The Heat Is On\" came from which 1984 film?",
+  a:["Beverly Hills Cop","48 Hrs.","Fletch","Cobra"],c:0,
+  e:"Frey was a founding member of the Eagles."}
 ];
 
 const WINDOW_MS=15000, BASE=1000, BONUS=1000;
@@ -220,6 +333,35 @@ let state=null, players=[], picked=null, raf=null, chan=null, connected=false, l
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const bonus=ms=>Math.round(BONUS*Math.pow(Math.max(0,1-ms/WINDOW_MS),.6));
 const tvMode=on=>document.body.classList.toggle("tv",on);
+
+/* ---- deterministic answer shuffle -------------------------------
+   Order is derived from the room code plus the question number, so
+   every phone and the TV independently arrive at the same layout
+   without needing to agree over the network.                       */
+function hashStr(s){
+  let h=2166136261;
+  for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }
+  return h>>>0;
+}
+function rng(seed){
+  return function(){
+    seed=seed+0x6D2B79F5|0;
+    let t=Math.imul(seed^seed>>>15,1|seed);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+function shuffled(qi){
+  const base=QS[qi];
+  if(!base) return null;
+  const order=base.a.map((_,i)=>i);
+  const r=rng(hashStr(room+":"+qi));
+  for(let i=order.length-1;i>0;i--){
+    const j=Math.floor(r()*(i+1));
+    [order[i],order[j]]=[order[j],order[i]];
+  }
+  return { q:base.q, e:base.e, a:order.map(i=>base.a[i]), c:order.indexOf(base.c) };
+}
 
 function diag(){
   const d=document.getElementById("diag"); if(!d) return;
@@ -335,7 +477,7 @@ async function startScreen(code){
 }
 
 function screenView(){
-  const ph=state.phase, q=QS[state.qi];
+  const ph=state.phase, q=shuffled(state.qi);
   let b="";
   if(ph==="lobby"){
     b=`<div class="wordmark">Hollywood Hits · 90s soundtrack trivia</div>
@@ -409,7 +551,7 @@ async function startHost(code){
 }
 
 function hostView(){
-  const ph=state.phase, q=QS[state.qi], nq=QS[state.qi+1];
+  const ph=state.phase, q=shuffled(state.qi), nq=QS[state.qi+1];
   const label = ph==="lobby" ? "Start — question 1"
     : ph==="question" ? "Reveal the answer"
     : ph==="reveal" ? (state.qi+1>=QS.length?"Final scores":"Show standings")
@@ -525,7 +667,7 @@ async function joinGame(code,name){
 }
 
 function playerView(){
-  const ph=state.phase, q=QS[state.qi];
+  const ph=state.phase, q=shuffled(state.qi);
   let b="";
   if(ph==="lobby"){
     b=`<div class="wordmark">Hollywood Hits</div><div class="spacer"></div>
@@ -568,7 +710,7 @@ async function lockIn(i){
   if(picked!==null) return;
   picked=i;
   const ms=Date.now()-new Date(state.started_at).getTime();
-  const g=(i===QS[state.qi].c && ms<=WINDOW_MS) ? BASE+bonus(ms) : 0;
+  const g=(i===shuffled(state.qi).c && ms<=WINDOW_MS) ? BASE+bonus(ms) : 0;
   earned[state.qi]=g; myScore+=g;
   playerView();
   const {error}=await db.from("players")
