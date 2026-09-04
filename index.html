@@ -152,6 +152,7 @@ body.print .shell{background:#fff;border:0;border-radius:0;max-width:none;width:
   border:0;border-radius:3px;background:var(--flare);color:#141110;cursor:pointer}
 .printbar button.q{background:transparent;color:#bbb;border:1px solid #444}
 @media print{.printbar{display:none}.card{border-color:#ddd;break-inside:avoid}@page{margin:8mm}}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:60}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -704,6 +705,10 @@ function playerView(){
     document.querySelectorAll("#p-answers .ans").forEach(x=>x.onclick=()=>lockIn(+x.dataset.i));
   }
   if(ph==="board"||ph==="done") paintBoard("p-lb",meId,5);
+  if(ph==="reveal" && q && picked===q.c && fxFor!==state.qi){
+    fxFor=state.qi;
+    celebrate();
+  }
 }
 
 async function lockIn(i){
@@ -716,6 +721,71 @@ async function lockIn(i){
   const {error}=await db.from("players")
     .update({score:myScore,updated_at:new Date().toISOString()}).eq("id",meId);
   if(error) fail(error.message);
+}
+
+/* ================================================================
+   CELEBRATION — fired on a player's phone when they get one right
+================================================================ */
+let fxFor=null;
+
+function celebrate(){
+  if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  const old=document.getElementById("fx"); if(old) old.remove();
+  const cv=document.createElement("canvas");
+  cv.id="fx";
+  document.body.appendChild(cv);
+
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const W=cv.clientWidth, H=cv.clientHeight;
+  cv.width=W*dpr; cv.height=H*dpr;
+  const ctx=cv.getContext("2d");
+  ctx.scale(dpr,dpr);
+
+  const COLOURS=["#FF6A13","#F6F1E7","#4DB6D0","#FFC46B"];
+  let bits=[], shells=0, t0=performance.now();
+
+  function burst(x,y){
+    const hue=COLOURS[Math.floor(Math.random()*COLOURS.length)];
+    const n=34+Math.floor(Math.random()*16);
+    for(let i=0;i<n;i++){
+      const ang=(Math.PI*2*i)/n + Math.random()*.2;
+      const sp=1.6+Math.random()*3.4;
+      bits.push({x,y,vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,
+                 life:1,decay:.008+Math.random()*.012,col:hue,r:1.4+Math.random()*1.6});
+    }
+  }
+
+  /* three shells, staggered, upper half of the screen */
+  const launch=()=>{
+    if(shells>=3) return;
+    burst(W*(.2+Math.random()*.6), H*(.18+Math.random()*.3));
+    shells++;
+    if(shells<3) setTimeout(launch,260+Math.random()*220);
+  };
+  launch();
+
+  (function frame(now){
+    ctx.clearRect(0,0,W,H);
+    bits=bits.filter(b=>b.life>0);
+    for(const b of bits){
+      b.x+=b.vx; b.y+=b.vy;
+      b.vy+=.055;              // gravity
+      b.vx*=.985; b.vy*=.985;  // drag
+      b.life-=b.decay;
+      ctx.globalAlpha=Math.max(0,b.life);
+      ctx.fillStyle=b.col;
+      ctx.beginPath();
+      ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    if(bits.length || now-t0<1400) requestAnimationFrame(frame);
+    else cv.remove();
+  })(t0);
+
+  /* short haptic tap — remove this line if it's unwanted */
+  if(navigator.vibrate) try{ navigator.vibrate(40); }catch(e){}
 }
 
 /* ================================================================
