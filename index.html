@@ -133,6 +133,21 @@ input.code{font-family:var(--mono);letter-spacing:.3em;text-transform:uppercase;
 .qpreview{background:var(--card);border:1px solid var(--edge);border-radius:3px;
   padding:14px;margin-top:14px;font-size:15px;line-height:1.4}
 .qpreview .c{color:var(--ok);font-size:13.5px;margin-top:8px}
+.stat.tap{cursor:pointer;user-select:none;position:relative}
+.stat.tap:active{border-color:var(--smoke)}
+.stat .hint{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dimmer);margin-top:5px}
+.roster{margin-top:12px;border:1px solid var(--edge);border-radius:3px;
+  max-height:236px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.roster .r{display:flex;align-items:center;gap:10px;padding:9px 11px;
+  border-bottom:1px solid #23201D;font-size:14px}
+.roster .r:last-child{border-bottom:0}
+.roster .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.roster .sc{font-family:var(--mono);font-size:12.5px;color:var(--smoke);flex:none}
+.roster .x{flex:none;width:28px;height:28px;padding:0;border:1px solid var(--edge);
+  background:transparent;color:var(--dimmer);border-radius:3px;cursor:pointer;
+  font-size:15px;line-height:1;font-family:var(--sans)}
+.roster .x:active{border-color:var(--halt);color:var(--halt)}
+.roster .none{padding:14px 11px;color:var(--dimmer);font-size:13px}
 
 .diag{margin-top:18px;padding-top:14px;border-top:1px solid var(--edge);
   font-family:var(--mono);font-size:11.5px;color:var(--dimmer);line-height:1.6}
@@ -334,6 +349,7 @@ const WINDOW_MS=15000, BASE=1000, BONUS=1000;
 const app=document.getElementById("app");
 let role=null, room="", meId=null, myName="", myScore=0, earned={};
 let state=null, players=[], picked=null, raf=null, chan=null, connected=false, lastErr="";
+let showRoster=false;
 
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const bonus=ms=>Math.round(BONUS*Math.pow(Math.max(0,1-ms/WINDOW_MS),.6));
@@ -551,7 +567,7 @@ async function startHost(code){
   role="host"; room=code; state=r;
   players=await loadPlayers(code);
   subscribe(code, x=>{ state=x; hostView(); },
-    ()=>{ const c=document.getElementById("h-count"); if(c) c.textContent=players.length; diag(); });
+    ()=>{ paintRoster(); diag(); });
   hostView();
 }
 
@@ -568,9 +584,14 @@ function hostView(){
     <div class="wordmark">Host · room ${esc(room)}</div>
     <h2 style="margin-top:12px">${phaseName}</h2>
     <div class="statusgrid">
-      <div class="stat"><div class="l">Players</div><div class="v" id="h-count">${players.length}</div></div>
+      <div class="stat tap" id="h-toggle">
+        <div class="l">Players</div>
+        <div class="v" id="h-count">${players.length}</div>
+        <div class="hint" id="h-hint">${showRoster?"tap to hide":"tap to show"}</div>
+      </div>
       <div class="stat"><div class="l">Question</div><div class="v">${state.qi<0?"—":(state.qi+1)+"/"+QS.length}</div></div>
     </div>
+    <div class="roster" id="h-roster"${showRoster?"":" hidden"}></div>
     ${(ph==="question"||ph==="reveal")?`<div class="qpreview">${esc(q.q)}
       <div class="c">Correct: ${"ABCD"[q.c]} — ${esc(q.a[q.c])}</div></div>`:""}
     ${((ph==="lobby"||ph==="board")&&nq)?`<div class="qpreview" style="color:var(--smoke)">Next: ${esc(nq.q)}</div>`:""}
@@ -578,14 +599,55 @@ function hostView(){
     ${ph==="done"
       ? `<button class="btn go" id="b-restart">Start a new game</button>`
       : `<button class="btn go" id="b-go">${label}</button>`}
-    <button class="btn danger small" id="b-reset">Reset scores</button>
+    <button class="btn danger small" id="b-reset">Reset scores, keep players</button>
+    <button class="btn danger small" id="b-clear">Remove all players</button>
     <div class="diag" id="diag"></div>`;
   diag();
   const go=document.getElementById("b-go"); if(go) go.onclick=advance;
   const rs=document.getElementById("b-restart"); if(rs) rs.onclick=restart;
   document.getElementById("b-reset").onclick=async()=>{
-    if(confirm("Zero everyone's score and go back to the waiting room?")) await restart();
+    if(confirm("Zero everyone's score and go back to the waiting room?\n\nPlayers stay in the game.")) await restart();
   };
+  document.getElementById("b-clear").onclick=clearPlayers;
+  document.getElementById("h-toggle").onclick=()=>{
+    showRoster=!showRoster;
+    document.getElementById("h-roster").hidden=!showRoster;
+    document.getElementById("h-hint").textContent=showRoster?"tap to hide":"tap to show";
+    paintRoster();
+  };
+  paintRoster();
+}
+
+function paintRoster(){
+  const c=document.getElementById("h-count"); if(c) c.textContent=players.length;
+  const el=document.getElementById("h-roster");
+  if(!el || !showRoster) return;
+  const all=[...players].sort((a,b)=>b.score-a.score);
+  if(!all.length){ el.innerHTML=`<div class="none">Nobody has joined yet.</div>`; return; }
+  el.innerHTML=all.map(p=>
+    `<div class="r"><span class="nm">${esc(p.name)}</span>
+      <span class="sc">${p.score.toLocaleString()}</span>
+      <button class="x" data-kick="${esc(p.id)}" title="Remove this player">&times;</button></div>`).join("");
+  el.querySelectorAll("[data-kick]").forEach(b=>b.onclick=async()=>{
+    const who=players.find(p=>p.id===b.dataset.kick);
+    if(!who) return;
+    if(!confirm(`Remove ${who.name} from the game?`)) return;
+    const {error}=await db.from("players").delete().eq("id",b.dataset.kick);
+    if(error) return fail(error.message);
+    players=await loadPlayers(room);
+    paintRoster();
+  });
+}
+
+async function clearPlayers(){
+  if(!confirm("Remove everyone from the game?\n\nThe count goes to zero and every player has to rejoin.")) return;
+  const {error}=await db.from("players").delete().eq("room_code",room);
+  if(error){ fail(error.message); alert("Couldn't remove players — "+error.message+
+    "\n\nIf this mentions permission or policy, the delete policy SQL hasn't been run yet."); return; }
+  const r=await upsertRoom(room,{phase:"lobby",qi:-1,started_at:null});
+  players=await loadPlayers(room);
+  if(r){ state=r; }
+  hostView();
 }
 
 async function advance(){
@@ -666,7 +728,11 @@ async function joinGame(code,name){
     const changed = (x.phase!==state.phase || x.qi!==state.qi);
     state=x;
     if(changed){ if(x.phase==="question") picked=null; playerView(); }
-  }, ()=>{ if(state.phase==="board"||state.phase==="done") paintBoard("p-lb",meId,5); diag(); });
+  }, ()=>{
+    if(meId && players.length && !players.some(p=>p.id===meId)){ removed(); return; }
+    if(state.phase==="board"||state.phase==="done") paintBoard("p-lb",meId,5);
+    diag();
+  });
   playerView();
   return true;
 }
@@ -725,6 +791,31 @@ async function lockIn(i){
   const {error}=await db.from("players")
     .update({score:myScore,updated_at:new Date().toISOString()}).eq("id",meId);
   if(error) fail(error.message);
+}
+
+/* ---------- the host cleared the room ---------- */
+async function removed(){
+  stopClock();
+  await unsub();
+  try{ localStorage.removeItem("hh_id"); }catch(e){}
+  const rm=room, nm=myName;
+  meId=null; myScore=0; earned={}; picked=null;
+  tvMode(false); document.body.className="";
+  app.innerHTML=`
+    <div class="wordmark">Hollywood Hits</div>
+    <div class="spacer"></div>
+    <h1>The host reset<br>the game</h1>
+    <p class="lede">Everyone has been removed. Rejoin to play the next round.</p>
+    <div class="spacer"></div>
+    <button class="btn" id="b-re">Rejoin</button>
+    <div class="diag" id="diag"></div>`;
+  diag();
+  document.getElementById("b-re").onclick=()=>{
+    myName=nm;
+    setupJoin(rm);
+    const f=document.getElementById("f-name");
+    if(f){ f.value=nm; f.dispatchEvent(new Event("input")); }
+  };
 }
 
 /* ================================================================
