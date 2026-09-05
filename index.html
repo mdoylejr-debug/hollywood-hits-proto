@@ -133,6 +133,15 @@ input.code{font-family:var(--mono);letter-spacing:.3em;text-transform:uppercase;
 .qpreview{background:var(--card);border:1px solid var(--edge);border-radius:3px;
   padding:14px;margin-top:14px;font-size:15px;line-height:1.4}
 .qpreview .c{color:var(--ok);font-size:13.5px;margin-top:8px}
+.tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;
+  letter-spacing:.05em;text-transform:uppercase;padding:5px 10px;border-radius:2px;
+  background:var(--card);border:1px solid var(--edge);color:var(--smoke)}
+.tag b{color:var(--flare);font-family:var(--mono);letter-spacing:0}
+.tag.hard{border-color:#5A3A1C}
+.tag.hard b{color:#FFC46B}
+.tv .tag{font-size:1.4vw;padding:.8vh 1.2vw;gap:1vw}
+.tagrow{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.tv .tagrow{margin-top:1.6vh;gap:1vw}
 .stat.tap{cursor:pointer;user-select:none;position:relative}
 .stat.tap:active{border-color:var(--smoke)}
 .stat .hint{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--dimmer);margin-top:5px}
@@ -196,152 +205,194 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON, {
    CONTENT
 ================================================================ */
 const QS=[
- /* ---------- 1. All Star — Shrek ---------- */
- {q:"\"All Star\" by Smash Mouth opens which 2001 animated film?",
-  a:["Shrek","Monsters, Inc.","Ice Age","Toy Story 2"],c:0,
-  e:"Smash Mouth released it in 1999, but Shrek made it inescapable."},
- {q:"Which band recorded \"Come and Get Your Love\", heard over the opening of Guardians of the Galaxy?",
-  a:["Redbone","War","Rare Earth","The Isley Brothers"],c:0,
+ {q:"Who performed “All Star”?",
+  a:["Smash Mouth","Sugar Ray","The Offspring","Third Eye Blind"],c:0,
+  pts:100,diff:"Easy",kind:"Song",song:"All Star · Shrek",
+  e:"Released in 1999, two years before Shrek made it inescapable."},
+ {q:"In Shrek, what does Lord Farquaad need Shrek to do before he will marry Princess Fiona?",
+  a:["Rescue her from a dragon","Find the Magic Mirror","Retrieve a magical artifact","Defeat the dragon"],c:0,
+  pts:250,diff:"Difficult",kind:"Movie",song:"All Star · Shrek",
+  e:"Farquaad sends Shrek to the castle in exchange for his swamp."},
+ {q:"Which group performed “Come and Get Your Love”?",
+  a:["War","Redbone","The Isley Brothers","Earth, Wind & Fire"],c:1,
+  pts:100,diff:"Easy",kind:"Song",song:"Come and Get Your Love · Guardians of the Galaxy",
   e:"Redbone released it in 1974; the film revived it forty years later."},
- {q:"Nick Lowe's \"Cruel to Be Kind\" appears in which 1999 teen comedy?",
-  a:["10 Things I Hate About You","She's All That","Never Been Kissed","Drive Me Crazy"],c:0,
-  e:"The film transplants The Taming of the Shrew to a Seattle high school."},
- {q:"Which band recorded \"Don't You (Forget About Me)\" for The Breakfast Club?",
-  a:["Simple Minds","Tears for Fears","Ultravox","The Psychedelic Furs"],c:0,
+ {q:"What does Peter Quill steal from Morag at the beginning of Guardians of the Galaxy?",
+  a:["The Orb","A blaster","The Power Stone","A spaceship"],c:0,
+  pts:250,diff:"Difficult",kind:"Movie",song:"Come and Get Your Love · Guardians of the Galaxy",
+  e:"The Power Stone is inside the Orb, but the Orb is what he takes."},
+ {q:"Who originally performed “Cruel to Be Kind”?",
+  a:["Elvis Costello","Nick Lowe","Joe Jackson","Billy Bragg"],c:1,
+  pts:100,diff:"Easy",kind:"Song",song:"Cruel to Be Kind · 10 Things I Hate About You",
+  e:"Nick Lowe co-wrote it with Ian Gomm; a 1979 hit."},
+ {q:"Why does Cameron need Patrick's help in 10 Things I Hate About You?",
+  a:["Cameron wants to get revenge on Joey","Cameron wants to date Kat","Cameron wants Bianca to be allowed to date","Cameron wants to join the soccer team"],c:2,
+  pts:250,diff:"Difficult",kind:"Movie",song:"Cruel to Be Kind · 10 Things I Hate About You",
+  e:"Bianca can't date until her older sister Kat does."},
+ {q:"Who performed “Don't You (Forget About Me)”?",
+  a:["Simple Minds","Duran Duran","The Cure","Tears for Fears"],c:0,
+  pts:100,diff:"Easy",kind:"Song",song:"Don't You (Forget About Me) · The Breakfast Club",
   e:"Simple Minds turned the song down at first and had to be talked into it."},
- {q:"\"Eye of the Tiger\" was written for which film?",
-  a:["Rocky III","Rocky II","Rocky IV","Raging Bull"],c:0,
-  e:"Sylvester Stallone approached Survivor after failing to license a Queen track."},
- {q:"Irene Cara sang the title song of which 1980 film about a performing arts school?",
-  a:["Fame","Flashdance","A Chorus Line","Footloose"],c:0,
+ {q:"Why are the five students at school on a Saturday in The Breakfast Club?",
+  a:["A school dance","A special exam","Detention","A sports practice"],c:2,
+  pts:100,diff:"Easy",kind:"Movie",song:"Don't You (Forget About Me) · The Breakfast Club",
+  e:"Nine hours of detention under the eye of Mr. Vernon."},
+ {q:"Which band performed “Eye of the Tiger”?",
+  a:["Journey","Boston","Foreigner","Survivor"],c:3,
+  pts:100,diff:"Easy",kind:"Song",song:"Eye of the Tiger · Rocky III",
+  e:"Stallone approached Survivor after failing to license a Queen track."},
+ {q:"Who trains Rocky for his rematch with Clubber Lang?",
+  a:["Mickey Goldmill","Apollo Creed","Duke Evers","Tony Gazzo"],c:1,
+  pts:250,diff:"Difficult",kind:"Movie",song:"Eye of the Tiger · Rocky III",
+  e:"His old rival steps in after Mickey's death."},
+ {q:"Who performed the hit song “Fame”?",
+  a:["Irene Cara","Donna Summer","Diana Ross","Patti LaBelle"],c:0,
+  pts:100,diff:"Easy",kind:"Song",song:"Fame · Fame",
   e:"It won the Academy Award for Best Original Song."},
- {q:"Which film features \"Flashdance... What a Feeling\"?",
-  a:["Flashdance","Fame","Dirty Dancing","Staying Alive"],c:0,
-  e:"Irene Cara co-wrote it and won an Oscar for it, three years after Fame."},
- {q:"Who performed the title song from Footloose?",
-  a:["Kenny Loggins","Bonnie Tyler","Deniece Williams","Shalamar"],c:0,
-  e:"All four artists appear on that soundtrack."},
- {q:"Who recorded the theme from Ghostbusters?",
-  a:["Ray Parker Jr.","Huey Lewis","Lionel Richie","Rick James"],c:0,
-  e:"Huey Lewis later sued over its resemblance to \"I Want a New Drug\"."},
- {q:"Frankie Valli sang the title song from Grease. Who wrote it?",
-  a:["Barry Gibb","John Farrar","Jim Jacobs","Frankie Valli"],c:0,
-  e:"Barry Gibb of the Bee Gees, at the height of their run."},
- {q:"\"Happy\" by Pharrell Williams was written for which film?",
-  a:["Despicable Me 2","Minions","The Lego Movie","Sing"],c:0,
-  e:"It spent ten weeks at number one on the Billboard Hot 100."},
- {q:"Which film ends with \"(I've Had) The Time of My Life\"?",
-  a:["Dirty Dancing","Footloose","Flashdance","Staying Alive"],c:0,
-  e:"Bill Medley and Jennifer Warnes sang it; it won the Oscar."},
- {q:"\"Let's Go Crazy\" opens which 1984 Prince film?",
-  a:["Purple Rain","Under the Cherry Moon","Graffiti Bridge","Sign o' the Times"],c:0,
-  e:"Prince stars as The Kid, in a story loosely drawn from his own."},
- {q:"Rascal Flatts covered \"Life Is a Highway\" for which 2006 animated film?",
-  a:["Cars","Over the Hedge","Ice Age: The Meltdown","Open Season"],c:0,
-  e:"Tom Cochrane wrote and recorded the original in 1991."},
- {q:"Which film opens with Iggy Pop's \"Lust for Life\"?",
-  a:["Trainspotting","Sid and Nancy","Shallow Grave","Human Traffic"],c:0,
-  e:"Danny Boyle directed both Trainspotting and Shallow Grave."},
- {q:"The musical Mamma Mia! is built on the songs of which group?",
-  a:["ABBA","Queen","The Bee Gees","Blondie"],c:0,
+ {q:"What city is the performing-arts high school in Fame based in?",
+  a:["Chicago","Los Angeles","New York City","Boston"],c:2,
+  pts:250,diff:"Difficult",kind:"Movie",song:"Fame · Fame",
+  e:"Modelled on New York's High School of Performing Arts."},
+ {q:"Which movie is associated with the song “Flashdance... What a Feeling”?",
+  a:["Fame","Footloose","Flashdance","Dirty Dancing"],c:2,
+  pts:100,diff:"Easy",kind:"Song",song:"Flashdance... What a Feeling · Flashdance",
+  e:"Irene Cara co-wrote it and won an Oscar, three years after Fame."},
+ {q:"What is Alex Owens' unusual combination of jobs in Flashdance?",
+  a:["Welder by day and dancer by night","Mechanic by day and singer by night","Construction worker by day and actress by night","Factory worker by day and musician by night"],c:0,
+  pts:500,diff:"Hard",kind:"Movie",song:"Flashdance... What a Feeling · Flashdance",
+  e:"She welds in a Pittsburgh steel mill and dances at a bar after hours."},
+ {q:"Who performed “Footloose”?",
+  a:["Kenny Loggins","Huey Lewis","Billy Ocean","Phil Collins"],c:0,
+  pts:100,diff:"Easy",kind:"Song",song:"Footloose · Footloose",
+  e:"Loggins co-wrote it with Dean Pitchford, who also wrote the screenplay."},
+ {q:"What prompts Ren to challenge the town's ban on dancing?",
+  a:["He wants to win a dance competition","He believes the ban is unfair and repressive","His girlfriend asks him to","He wants to impress the town's mayor"],c:1,
+  pts:250,diff:"Difficult",kind:"Movie",song:"Footloose · Footloose",
+  e:"He argues his case to the town council, scripture included."},
+ {q:"Who performed “Ghostbusters”?",
+  a:["Ray Parker Jr.","Rick James","Billy Preston","Lionel Richie"],c:0,
+  pts:100,diff:"Easy",kind:"Song",song:"Ghostbusters · Ghostbusters",
+  e:"Huey Lewis later sued over its resemblance to “I Want a New Drug”."},
+ {q:"What is the name of the building where Dana Barrett lives in Ghostbusters?",
+  a:["The Shandor Building","The Spook Central Building","The Dana Building","The Gozer Tower"],c:0,
+  pts:500,diff:"Hard",kind:"Movie",song:"Ghostbusters · Ghostbusters",
+  e:"Designed by Ivo Shandor as an antenna for summoning Gozer."},
+ {q:"Who performed “Grease Is the Word”?",
+  a:["Frankie Valli","Barry Gibb","Paul Anka","Neil Sedaka"],c:0,
+  pts:100,diff:"Easy",kind:"Song",song:"Grease · Grease",
+  e:"Barry Gibb wrote it; Frankie Valli sang it."},
+ {q:"What is the name of Danny and Sandy's high school?",
+  a:["Rydell High","Roosevelt High","Springfield High","Westside High"],c:0,
+  pts:100,diff:"Easy",kind:"Movie",song:"Grease · Grease",
+  e:"Named after 1950s singer Bobby Rydell."},
+ {q:"Who performed “Happy”?",
+  a:["Bruno Mars","Pharrell Williams","Justin Timberlake","Jason Mraz"],c:1,
+  pts:100,diff:"Easy",kind:"Song",song:"Happy · Despicable Me 2",
+  e:"Ten weeks at number one on the Billboard Hot 100."},
+ {q:"What are Gru's yellow helpers called?",
+  a:["Munchkins","Minions","Goblins","Despicables"],c:1,
+  pts:100,diff:"Easy",kind:"Movie",song:"Happy · Despicable Me 2",
+  e:"They got their own spin-off film in 2015."},
+ {q:"Which of these singers performs “(I've Had) The Time of My Life” alongside Jennifer Warnes?",
+  a:["Bill Medley","Joe Cocker","Kenny Loggins","Michael McDonald"],c:0,
+  pts:250,diff:"Difficult",kind:"Song",song:"(I've Had) The Time of My Life · Dirty Dancing",
+  e:"Medley was half of The Righteous Brothers."},
+ {q:"What nickname is Frances Houseman known by in Dirty Dancing?",
+  a:["Frankie","Franny","Baby","Bunny"],c:2,
+  pts:100,diff:"Easy",kind:"Movie",song:"(I've Had) The Time of My Life · Dirty Dancing",
+  e:"Nobody puts her in a corner."},
+ {q:"Who performed “Let's Go Crazy”?",
+  a:["Prince","Rick Springfield","David Bowie","George Michael"],c:0,
+  pts:100,diff:"Easy",kind:"Song",song:"Let's Go Crazy · Purple Rain",
+  e:"Credited to Prince and The Revolution."},
+ {q:"What is the name of the Minneapolis nightclub central to Purple Rain?",
+  a:["The Palace","First Avenue","The Uptown","The Purple Room"],c:1,
+  pts:500,diff:"Hard",kind:"Movie",song:"Let's Go Crazy · Purple Rain",
+  e:"A real venue, and still open."},
+ {q:"“Life Is a Highway” was originally a hit for which Canadian artist before Rascal Flatts recorded their version?",
+  a:["Bryan Adams","Corey Hart","Tom Cochrane","Loverboy"],c:2,
+  pts:250,diff:"Difficult",kind:"Song",song:"Life Is a Highway · Cars",
+  e:"Cochrane released it in 1991, fifteen years before Cars."},
+ {q:"What is the name of the main character in Cars?",
+  a:["Mater","Doc Hudson","Lightning McQueen","Chick Hicks"],c:2,
+  pts:100,diff:"Easy",kind:"Movie",song:"Life Is a Highway · Cars",
+  e:"Voiced by Owen Wilson."},
+ {q:"Who performed “Lust for Life”?",
+  a:["Lou Reed","Iggy Pop","David Bowie","Alice Cooper"],c:1,
+  pts:100,diff:"Easy",kind:"Song",song:"Lust for Life · Trainspotting",
+  e:"Co-written with David Bowie in Berlin, 1977."},
+ {q:"Which two characters are running alongside Renton during the famous opening sequence of Trainspotting?",
+  a:["Begbie and Tommy","Spud and Tommy","Spud and Sick Boy","Sick Boy and Begbie"],c:1,
+  pts:500,diff:"Hard",kind:"Movie",song:"Lust for Life · Trainspotting",
+  e:"Shot on Edinburgh's Princes Street."},
+ {q:"Which group performed “Mamma Mia”?",
+  a:["ABBA","Roxette","Boney M.","Ace of Base"],c:0,
+  pts:100,diff:"Easy",kind:"Song",song:"Mamma Mia · Mamma Mia!",
   e:"The stage show ran for years before the 2008 film."},
- {q:"Roy Orbison's \"Oh, Pretty Woman\" gave its name to which 1990 film?",
-  a:["Pretty Woman","Working Girl","Overboard","Big Business"],c:0,
+ {q:"Where is Mamma Mia! primarily set?",
+  a:["Italy","Spain","Greece","Croatia"],c:2,
+  pts:250,diff:"Difficult",kind:"Movie",song:"Mamma Mia · Mamma Mia!",
+  e:"On the fictional Greek island of Kalokairi."},
+ {q:"Who originally performed “Oh, Pretty Woman”?",
+  a:["Roy Orbison","Buddy Holly","Gene Pitney","Del Shannon"],c:0,
+  pts:100,diff:"Easy",kind:"Song",song:"Oh, Pretty Woman · Pretty Woman",
   e:"Orbison recorded it in 1964, twenty-six years before the film."},
- {q:"Huey Lewis and the News recorded \"The Power of Love\" for which film?",
-  a:["Back to the Future","Ghostbusters","Weird Science","Teen Wolf"],c:0,
+ {q:"What is Edward Lewis's profession in Pretty Woman?",
+  a:["Lawyer","Hotel owner","Corporate raider/businessman","Real-estate developer"],c:2,
+  pts:250,diff:"Difficult",kind:"Movie",song:"Oh, Pretty Woman · Pretty Woman",
+  e:"He buys struggling companies and breaks them up."},
+ {q:"Who performed “The Power of Love”?",
+  a:["Huey Lewis and the News","The Cars","Hall & Oates","Toto"],c:0,
+  pts:100,diff:"Easy",kind:"Song",song:"The Power of Love · Back to the Future",
   e:"Huey Lewis cameos as the teacher who rejects Marty's band audition."},
- {q:"The film Pretty in Pink took its name from a song by which band?",
-  a:["The Psychedelic Furs","Simple Minds","Echo & the Bunnymen","New Order"],c:0,
+ {q:"What speed must the DeLorean reach to travel through time?",
+  a:["66 mph","77 mph","88 mph","99 mph"],c:2,
+  pts:100,diff:"Easy",kind:"Movie",song:"The Power of Love · Back to the Future",
+  e:"And it needs 1.21 gigawatts to get there."},
+ {q:"Which band performed “Pretty in Pink”?",
+  a:["The Cure","The Psychedelic Furs","Echo & the Bunnymen","The Smiths"],c:1,
+  pts:250,diff:"Difficult",kind:"Song",song:"Pretty in Pink · Pretty in Pink",
   e:"The band re-recorded the song for the film."},
- {q:"Who sang \"St. Elmo's Fire (Man in Motion)\"?",
-  a:["John Parr","John Waite","John Cafferty","Jon Anderson"],c:0,
+ {q:"At the end of Pretty in Pink, who does Andie ultimately choose?",
+  a:["Duckie","Steff","Blaine","No one"],c:2,
+  pts:500,diff:"Hard",kind:"Movie",song:"Pretty in Pink · Pretty in Pink",
+  e:"The ending was reshot after test audiences rejected the original."},
+ {q:"Who performed “St. Elmo's Fire (Man in Motion)”?",
+  a:["John Parr","John Waite","Robert Palmer","Bryan Adams"],c:0,
+  pts:250,diff:"Difficult",kind:"Song",song:"St. Elmo's Fire (Man in Motion) · St. Elmo's Fire",
   e:"Written with David Foster, and a US number one in 1985."},
- {q:"\"Stayin' Alive\" opens which 1977 film?",
-  a:["Saturday Night Fever","Grease","Car Wash","Thank God It's Friday"],c:0,
+ {q:"The characters in St. Elmo's Fire are members of what informal group of young people?",
+  a:["The Rat Pack","The Brat Pack","The Young Guns","The New Wave"],c:1,
+  pts:250,diff:"Difficult",kind:"Movie",song:"St. Elmo's Fire (Man in Motion) · St. Elmo's Fire",
+  e:"A label coined by New York magazine in 1985."},
+ {q:"Which group performed “Stayin' Alive”?",
+  a:["Chic","Earth, Wind & Fire","KC and the Sunshine Band","The Bee Gees"],c:3,
+  pts:100,diff:"Easy",kind:"Song",song:"Stayin' Alive · Saturday Night Fever",
   e:"The opening shot follows John Travolta's shoes down a Brooklyn street."},
- {q:"\"Time Warp\" comes from which film?",
-  a:["The Rocky Horror Picture Show","Hair","Tommy","Phantom of the Paradise"],c:0,
+ {q:"What is Tony Manero's occupation in Saturday Night Fever?",
+  a:["Mechanic","Construction worker","Paint-store clerk","Bartender"],c:2,
+  pts:250,diff:"Difficult",kind:"Movie",song:"Stayin' Alive · Saturday Night Fever",
+  e:"He works in a Brooklyn hardware and paint shop."},
+ {q:"Which movie features the song “The Time Warp”?",
+  a:["The Rocky Horror Picture Show","Little Shop of Horrors","Grease","The Blues Brothers"],c:0,
+  pts:100,diff:"Easy",kind:"Song",song:"Time Warp · The Rocky Horror Picture Show",
   e:"Richard O'Brien wrote it, and plays Riff Raff in the film."},
- {q:"Dolly Parton wrote and sang \"9 to 5\" for a film she also starred in. Who were her co-stars?",
-  a:["Jane Fonda and Lily Tomlin","Goldie Hawn and Bette Midler",
-     "Sally Field and Shirley MacLaine","Diane Keaton and Bette Midler"],c:0,
-  e:"Parton reportedly wrote the song on set, using her acrylic nails for rhythm."},
-
- /* ---------- 24 onwards ---------- */
- {q:"Celine Dion's \"My Heart Will Go On\" is the theme from which film?",
-  a:["Titanic","The Perfect Storm","Message in a Bottle","Pearl Harbor"],c:0,
-  e:"James Cameron initially didn't want a pop song in the film at all."},
- {q:"Whitney Houston's \"I Will Always Love You\" came from which 1992 film?",
-  a:["The Bodyguard","Waiting to Exhale","Boomerang","The Preacher's Wife"],c:0,
-  e:"Dolly Parton wrote and first recorded it in 1973."},
- {q:"\"Danger Zone\" is most associated with which 1986 film?",
-  a:["Top Gun","Iron Eagle","Firefox","Days of Thunder"],c:0,
-  e:"Kenny Loggins sang it after several other artists passed."},
- {q:"Tom Cruise dances in his socks and underwear to which song in Risky Business?",
-  a:["Old Time Rock and Roll","Born to Run","Jailhouse Rock","Twist and Shout"],c:0,
-  e:"Bob Seger's 1978 track, and the scene that made the film famous."},
- {q:"\"Unchained Melody\" soundtracks the pottery wheel scene in which 1990 film?",
-  a:["Ghost","Always","Truly Madly Deeply","Field of Dreams"],c:0,
-  e:"The Righteous Brothers recorded it in 1965; the film sent it back up the charts."},
- {q:"Seal's \"Kiss from a Rose\" featured in which 1995 film?",
-  a:["Batman Forever","Batman Returns","Judge Dredd","The Crow"],c:0,
-  e:"It went on to win the Grammy for Record of the Year."},
- {q:"\"Lose Yourself\" was written for which 2002 film?",
-  a:["8 Mile","Get Rich or Die Tryin'","Hustle & Flow","Brown Sugar"],c:0,
-  e:"The first hip-hop track to win Best Original Song at the Oscars."},
- {q:"Bruce Springsteen won an Academy Award for a song written for which 1993 film?",
-  a:["Philadelphia","In the Name of the Father","The Firm","Schindler's List"],c:0,
-  e:"\"Streets of Philadelphia\" also took four Grammys."},
- {q:"Coolio's \"Gangsta's Paradise\" came from which 1995 film?",
-  a:["Dangerous Minds","Clockers","Higher Learning","Kids"],c:0,
-  e:"It samples Stevie Wonder's \"Pastime Paradise\" from 1976."},
- {q:"Will Smith recorded the theme song for which of his own films?",
-  a:["Men in Black","Independence Day","Bad Boys","Enemy of the State"],c:0,
-  e:"It borrows heavily from Patrice Rushen's \"Forget Me Nots\"."},
- {q:"A car full of friends headbangs to \"Bohemian Rhapsody\" in which 1992 comedy?",
-  a:["Wayne's World","Encino Man","Airheads","Bill & Ted's Bogus Journey"],c:0,
-  e:"The scene returned the song to the US top ten, seventeen years after release."},
- {q:"Which Quentin Tarantino film uses \"Stuck in the Middle with You\"?",
-  a:["Reservoir Dogs","Pulp Fiction","Jackie Brown","True Romance"],c:0,
-  e:"Stealers Wheel, 1972, in what became the film's most notorious scene."},
- {q:"Dick Dale's surf guitar version of \"Misirlou\" opens which 1994 film?",
-  a:["Pulp Fiction","Reservoir Dogs","Natural Born Killers","The Endless Summer"],c:0,
-  e:"The tune is far older — a Greek and Middle Eastern folk melody."},
- {q:"\"Born to Be Wild\" is tied forever to which 1969 road movie?",
-  a:["Easy Rider","Midnight Cowboy","Vanishing Point","Bonnie and Clyde"],c:0,
-  e:"Steppenwolf's lyric gave the phrase \"heavy metal\" to rock criticism."},
- {q:"\"Raindrops Keep Fallin' on My Head\" won an Oscar from which 1969 western?",
-  a:["Butch Cassidy and the Sundance Kid","True Grit","The Wild Bunch",
-     "Once Upon a Time in the West"],c:0,
-  e:"Written by Burt Bacharach and Hal David, sung by B.J. Thomas."},
- {q:"Audrey Hepburn sings \"Moon River\" on a fire escape in which film?",
-  a:["Breakfast at Tiffany's","Roman Holiday","Funny Face","Charade"],c:0,
-  e:"Henry Mancini wrote the music, Johnny Mercer the words."},
- {q:"\"Over the Rainbow\" comes from which 1939 film?",
-  a:["The Wizard of Oz","Gone with the Wind","Babes in Arms","Snow White"],c:0,
-  e:"It was nearly cut from the film for slowing down the opening."},
- {q:"\"Circle of Life\" opens which 1994 animated film?",
-  a:["The Lion King","Aladdin","Pocahontas","The Jungle Book"],c:0,
-  e:"Elton John wrote the music and Tim Rice the lyrics."},
- {q:"\"A Whole New World\" is the love theme from which Disney film?",
-  a:["Aladdin","The Little Mermaid","Beauty and the Beast","Hercules"],c:0,
-  e:"Alan Menken and Tim Rice; it won Best Original Song in 1993."},
- {q:"Who provided the singing voice for \"Let It Go\" in Frozen?",
-  a:["Idina Menzel","Kristen Bell","Demi Lovato","Auli'i Cravalho"],c:0,
-  e:"Demi Lovato recorded the pop version heard over the end credits."},
- {q:"\"Shallow\" is from which 2018 film?",
-  a:["A Star Is Born","Bohemian Rhapsody","Rocketman","Vox Lux"],c:0,
-  e:"Lady Gaga and Bradley Cooper performed it; it won Best Original Song."},
- {q:"Adele recorded the theme for which James Bond film?",
-  a:["Skyfall","Spectre","Quantum of Solace","No Time to Die"],c:0,
-  e:"The first Bond theme ever to win an Academy Award."},
- {q:"Glenn Frey's \"The Heat Is On\" came from which 1984 film?",
-  a:["Beverly Hills Cop","48 Hrs.","Fletch","Cobra"],c:0,
-  e:"Frey was a founding member of the Eagles."}
+ {q:"Which character does Tim Curry play in The Rocky Horror Picture Show?",
+  a:["Dr. Frank-N-Furter","Riff Raff","Rocky","Eddie"],c:0,
+  pts:100,diff:"Easy",kind:"Movie",song:"Time Warp · The Rocky Horror Picture Show",
+  e:"Curry had already played the part on stage in London."},
+ {q:"Who performed “9 to 5”?",
+  a:["Reba McEntire","Loretta Lynn","Dolly Parton","Tammy Wynette"],c:2,
+  pts:100,diff:"Easy",kind:"Song",song:"9 to 5 · 9 to 5",
+  e:"Parton wrote it as well as starring in the film."},
+ {q:"Which of the following is NOT one of the three main women who team up against their boss in 9 to 5?",
+  a:["Violet Newstead","Doralee Rhodes","Judy Bernly","Tess McGill"],c:3,
+  pts:500,diff:"Hard",kind:"Movie",song:"9 to 5 · 9 to 5",
+  e:"Tess McGill is Melanie Griffith's character in Working Girl."}
 ];
 
-const WINDOW_MS=15000, BASE=1000, BONUS=1000;
+const WINDOW_MS=15000;
+const MAX_SCORE=QS.reduce((n,q)=>n+q.pts,0);
 
 /* ================================================================
    STATE
@@ -352,7 +403,6 @@ let state=null, players=[], picked=null, raf=null, chan=null, connected=false, l
 let showRoster=false;
 
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-const bonus=ms=>Math.round(BONUS*Math.pow(Math.max(0,1-ms/WINDOW_MS),.6));
 const tvMode=on=>document.body.classList.toggle("tv",on);
 
 /* ---- deterministic answer shuffle -------------------------------
@@ -381,7 +431,8 @@ function shuffled(qi){
     const j=Math.floor(r()*(i+1));
     [order[i],order[j]]=[order[j],order[i]];
   }
-  return { q:base.q, e:base.e, a:order.map(i=>base.a[i]), c:order.indexOf(base.c) };
+  return { q:base.q, e:base.e, a:order.map(i=>base.a[i]), c:order.indexOf(base.c),
+           pts:base.pts, diff:base.diff, kind:base.kind, song:base.song };
 }
 
 function diag(){
@@ -517,7 +568,12 @@ function screenView(){
       </div>`;
   } else if(ph==="question"){
     b=`<div class="wordmark">Question ${state.qi+1} of ${QS.length}</div>
-      <h1 style="font-size:3.6vw;line-height:1.2;margin-top:2vh">${esc(q.q)}</h1>
+      <div class="tagrow">
+        <span class="tag ${q.diff==="Hard"?"hard":""}"><b>${q.pts}</b> points</span>
+        <span class="tag">${q.diff}</span>
+        <span class="tag">${q.kind}</span>
+      </div>
+      <h1 style="font-size:3.4vw;line-height:1.2;margin-top:2vh">${esc(q.q)}</h1>
       <div class="tvgrid">${q.a.map((t,i)=>
         `<div class="tvans"><span class="k">${"ABCD"[i]}</span><span class="t">${esc(t)}</span></div>`).join("")}</div>
       <div class="track"><div class="fill" id="d-fill"></div></div>
@@ -592,7 +648,9 @@ function hostView(){
       <div class="stat"><div class="l">Question</div><div class="v">${state.qi<0?"—":(state.qi+1)+"/"+QS.length}</div></div>
     </div>
     <div class="roster" id="h-roster"${showRoster?"":" hidden"}></div>
-    ${(ph==="question"||ph==="reveal")?`<div class="qpreview">${esc(q.q)}
+    ${(ph==="question"||ph==="reveal")?`<div class="qpreview">
+      <div style="color:var(--dimmer);font-size:12px;margin-bottom:7px">${q.pts} points · ${q.diff} · ${q.kind} · ${esc(q.song)}</div>
+      ${esc(q.q)}
       <div class="c">Correct: ${"ABCD"[q.c]} — ${esc(q.a[q.c])}</div></div>`:""}
     ${((ph==="lobby"||ph==="board")&&nq)?`<div class="qpreview" style="color:var(--smoke)">Next: ${esc(nq.q)}</div>`:""}
     <div class="spacer"></div>
@@ -747,6 +805,10 @@ function playerView(){
   } else if(ph==="question"){
     const done=picked!==null;
     b=`<div class="wordmark">Question ${state.qi+1} of ${QS.length}</div>
+      <div class="tagrow">
+        <span class="tag ${q.diff==="Hard"?"hard":""}"><b>${q.pts}</b> points</span>
+        <span class="tag">${q.kind}</span>
+      </div>
       <h2 style="margin-top:12px;font-size:19px;line-height:1.3;color:var(--smoke);font-weight:400">${esc(q.q)}</h2>
       <div class="track"><div class="fill" id="p-fill"></div></div>
       <div class="trackrow"><span id="p-note">${done?"Locked in":"Tap your answer"}</span><b id="p-secs">15.0</b></div>
@@ -765,7 +827,7 @@ function playerView(){
           <span class="k">${"ABCD"[i]}</span><span class="t">${esc(t)}</span></button>`).join("")}</div>`;
   } else {
     b=`<h2>${ph==="done"?"Final scores":"Standings"}</h2>
-      <p class="lede">You have <b style="color:var(--chalk)">${myScore.toLocaleString()}</b> points.</p>
+      <p class="lede">You have <b style="color:var(--chalk)">${myScore.toLocaleString()}</b> of ${MAX_SCORE.toLocaleString()} points.</p>
       <div id="p-lb" style="margin-top:14px"></div><div class="spacer"></div>`;
   }
   app.innerHTML=b+`<div class="diag" id="diag"></div>`;
@@ -785,7 +847,7 @@ async function lockIn(i){
   if(picked!==null) return;
   picked=i;
   const ms=Date.now()-new Date(state.started_at).getTime();
-  const g=(i===shuffled(state.qi).c && ms<=WINDOW_MS) ? BASE+bonus(ms) : 0;
+  const g=(i===shuffled(state.qi).c && ms<=WINDOW_MS) ? shuffled(state.qi).pts : 0;
   earned[state.qi]=g; myScore+=g;
   playerView();
   const {error}=await db.from("players")
