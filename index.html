@@ -133,6 +133,11 @@ input.code{font-family:var(--mono);letter-spacing:.3em;text-transform:uppercase;
 .qpreview{background:var(--card);border:1px solid var(--edge);border-radius:3px;
   padding:14px;margin-top:14px;font-size:15px;line-height:1.4}
 .qpreview .c{color:var(--ok);font-size:13.5px;margin-top:8px}
+.firstline{display:flex;align-items:center;gap:10px;margin-top:14px;
+  padding:12px 14px;border-radius:3px;background:var(--chalk);color:var(--stage)}
+.firstline .bolt{font-size:20px;line-height:1;flex:none}
+.firstline .txt{flex:1;font-weight:700;font-size:15.5px;line-height:1.25}
+.firstline .txt small{display:block;font-weight:400;font-size:13px;opacity:.7;margin-top:2px}
 .tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;
   letter-spacing:.05em;text-transform:uppercase;padding:5px 10px;border-radius:2px;
   background:var(--card);border:1px solid var(--edge);color:var(--smoke)}
@@ -391,7 +396,7 @@ const QS=[
   e:"Tess McGill is Melanie Griffith's character in Working Girl."}
 ];
 
-const WINDOW_MS=15000;
+const WINDOW_MS=15000, FIRST_BONUS=20;
 const MAX_SCORE=QS.reduce((n,q)=>n+q.pts,0);
 
 /* ================================================================
@@ -401,6 +406,7 @@ const app=document.getElementById("app");
 let role=null, room="", meId=null, myName="", myScore=0, earned={};
 let state=null, players=[], picked=null, raf=null, chan=null, connected=false, lastErr="";
 let showRoster=false;
+let firsts={};
 
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const tvMode=on=>document.body.classList.toggle("tv",on);
@@ -651,7 +657,8 @@ function hostView(){
     ${(ph==="question"||ph==="reveal")?`<div class="qpreview">
       <div style="color:var(--dimmer);font-size:12px;margin-bottom:7px">${q.pts} points · ${q.diff} · ${q.kind} · ${esc(q.song)}</div>
       ${esc(q.q)}
-      <div class="c">Correct: ${"ABCD"[q.c]} — ${esc(q.a[q.c])}</div></div>`:""}
+      <div class="c">Correct: ${"ABCD"[q.c]} — ${esc(q.a[q.c])}</div>
+      <div id="h-first" style="color:var(--flare);font-size:13px;margin-top:6px"></div></div>`:""}
     ${((ph==="lobby"||ph==="board")&&nq)?`<div class="qpreview" style="color:var(--smoke)">Next: ${esc(nq.q)}</div>`:""}
     <div class="spacer"></div>
     ${ph==="done"
@@ -667,6 +674,7 @@ function hostView(){
     if(confirm("Zero everyone's score and go back to the waiting room?\n\nPlayers stay in the game.")) await restart();
   };
   document.getElementById("b-clear").onclick=clearPlayers;
+  if(state.phase==="reveal") showFirst();
   document.getElementById("h-toggle").onclick=()=>{
     showRoster=!showRoster;
     document.getElementById("h-roster").hidden=!showRoster;
@@ -697,8 +705,18 @@ function paintRoster(){
   });
 }
 
+async function showFirst(){
+  const el=document.getElementById("h-first"); if(!el) return;
+  const {data}=await db.from("first_claims").select("player_id")
+    .eq("room_code",room).eq("qi",state.qi).maybeSingle();
+  if(!data){ el.textContent="Nobody got there first."; return; }
+  const who=players.find(p=>p.id===data.player_id);
+  el.textContent="First in: "+(who?who.name:"a player who has since left")+"  (+"+FIRST_BONUS+")";
+}
+
 async function clearPlayers(){
   if(!confirm("Remove everyone from the game?\n\nThe count goes to zero and every player has to rejoin.")) return;
+  await db.from("first_claims").delete().eq("room_code",room);
   const {error}=await db.from("players").delete().eq("room_code",room);
   if(error){ fail(error.message); alert("Couldn't remove players — "+error.message+
     "\n\nIf this mentions permission or policy, the delete policy SQL hasn't been run yet."); return; }
@@ -722,6 +740,8 @@ async function advance(){
 async function restart(){
   const {error}=await db.from("players").update({score:0}).eq("room_code",room);
   if(error) fail(error.message);
+  await db.from("first_claims").delete().eq("room_code",room);
+  firsts={};
   const r=await upsertRoom(room,{phase:"lobby",qi:-1,started_at:null});
   if(r){ state=r; players=await loadPlayers(room); hostView(); }
 }
@@ -817,10 +837,12 @@ function playerView(){
         `<button class="ans big${done?(i===picked?" picked":" dim"):""}" data-i="${i}"${done?" disabled":""}>
           <span class="k">${"ABCD"[i]}</span><span class="t">${esc(t)}</span></button>`).join("")}</div>`;
   } else if(ph==="reveal"){
-    const right=picked===q.c, g=earned[state.qi]??0;
+    const right=picked===q.c, g=earned[state.qi]??0, first=!!firsts[state.qi];
     b=`<div class="wordmark">Question ${state.qi+1}</div><div class="spacer"></div>
       <p class="verdict${right?"":" miss"}">${(picked===null||picked===-1)?"Too slow":(right?"Correct":"Not this time")}</p>
       <div class="pts">${g>0?"+"+g.toLocaleString()+" points":"No points"}</div>
+      ${first?`<div class="firstline"><span class="bolt">&#9889;</span>
+        <span class="txt">First in the room!<small>${q.pts} for the answer, plus ${FIRST_BONUS} for beating everyone to it</small></span></div>`:""}
       <p class="explain">${esc(q.e)}</p><div class="spacer"></div>
       <div>${q.a.map((t,i)=>
         `<button class="ans ${i===q.c?"correct":(i===picked?"":"dim")}" disabled>
@@ -839,17 +861,29 @@ function playerView(){
   if(ph==="board"||ph==="done") paintBoard("p-lb",meId,5);
   if(ph==="reveal" && q && picked===q.c && fxFor!==state.qi){
     fxFor=state.qi;
-    celebrate();
+    celebrate(!!firsts[state.qi]);
   }
 }
 
 async function lockIn(i){
   if(picked!==null) return;
   picked=i;
+  const qi=state.qi, sq=shuffled(qi);
   const ms=Date.now()-new Date(state.started_at).getTime();
-  const g=(i===shuffled(state.qi).c && ms<=WINDOW_MS) ? shuffled(state.qi).pts : 0;
-  earned[state.qi]=g; myScore+=g;
-  playerView();
+  const right=(i===sq.c && ms<=WINDOW_MS);
+
+  earned[qi]=right?sq.pts:0;
+  playerView();                       // lock the buttons straight away
+
+  if(right){
+    /* the database decides who was first — the primary key on
+       (room_code, qi) means only one insert can ever succeed */
+    const {error}=await db.from("first_claims")
+      .insert({room_code:room, qi, player_id:meId});
+    if(!error){ firsts[qi]=true; earned[qi]+=FIRST_BONUS; }
+  }
+
+  myScore+=earned[qi];
   const {error}=await db.from("players")
     .update({score:myScore,updated_at:new Date().toISOString()}).eq("id",meId);
   if(error) fail(error.message);
@@ -861,7 +895,7 @@ async function removed(){
   await unsub();
   try{ localStorage.removeItem("hh_id"); }catch(e){}
   const rm=room, nm=myName;
-  meId=null; myScore=0; earned={}; picked=null;
+  meId=null; myScore=0; earned={}; picked=null; firsts={};
   tvMode(false); document.body.className="";
   app.innerHTML=`
     <div class="wordmark">Hollywood Hits</div>
@@ -885,7 +919,7 @@ async function removed(){
 ================================================================ */
 let fxFor=null;
 
-function celebrate(){
+function celebrate(big){
   if(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   const old=document.getElementById("fx"); if(old) old.remove();
@@ -899,12 +933,15 @@ function celebrate(){
   const ctx=cv.getContext("2d");
   ctx.scale(dpr,dpr);
 
-  const COLOURS=["#FF6A13","#F6F1E7","#4DB6D0","#FFC46B"];
+  const COLOURS = big
+    ? ["#FFC46B","#FF6A13","#F6F1E7","#FFD98A","#FF8F3C"]   // gold-heavy for first place
+    : ["#FF6A13","#F6F1E7","#4DB6D0","#FFC46B"];
+  const SHELLS = big ? 6 : 3;
   let bits=[], shells=0, t0=performance.now();
 
   function burst(x,y){
     const hue=COLOURS[Math.floor(Math.random()*COLOURS.length)];
-    const n=34+Math.floor(Math.random()*16);
+    const n=(big?52:34)+Math.floor(Math.random()*16);
     for(let i=0;i<n;i++){
       const ang=(Math.PI*2*i)/n + Math.random()*.2;
       const sp=1.6+Math.random()*3.4;
@@ -915,10 +952,10 @@ function celebrate(){
 
   /* three shells, staggered, upper half of the screen */
   const launch=()=>{
-    if(shells>=3) return;
-    burst(W*(.2+Math.random()*.6), H*(.18+Math.random()*.3));
+    if(shells>=SHELLS) return;
+    burst(W*(.15+Math.random()*.7), H*(.14+Math.random()*.36));
     shells++;
-    if(shells<3) setTimeout(launch,260+Math.random()*220);
+    if(shells<SHELLS) setTimeout(launch,200+Math.random()*220);
   };
   launch();
 
@@ -937,12 +974,12 @@ function celebrate(){
       ctx.fill();
     }
     ctx.globalAlpha=1;
-    if(bits.length || now-t0<1400) requestAnimationFrame(frame);
+    if(bits.length || now-t0<(big?2200:1400)) requestAnimationFrame(frame);
     else cv.remove();
   })(t0);
 
   /* short haptic tap — remove this line if it's unwanted */
-  if(navigator.vibrate) try{ navigator.vibrate(40); }catch(e){}
+  if(navigator.vibrate) try{ navigator.vibrate(big?[35,60,35,60,90]:40); }catch(e){}
 }
 
 /* ================================================================
