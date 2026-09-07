@@ -133,6 +133,31 @@ input.code{font-family:var(--mono);letter-spacing:.3em;text-transform:uppercase;
 .qpreview{background:var(--card);border:1px solid var(--edge);border-radius:3px;
   padding:14px;margin-top:14px;font-size:15px;line-height:1.4}
 .qpreview .c{color:var(--ok);font-size:13.5px;margin-top:8px}
+.mtc{margin-top:12px;border:1px solid var(--edge);border-radius:3px;padding:12px}
+.mtc .row{display:flex;gap:8px;align-items:center;margin-bottom:9px}
+.mtc .row:last-child{margin-bottom:0}
+.mtc select,.mtc input{padding:8px 9px;font-size:13px;background:var(--card);color:var(--chalk);
+  border:1px solid var(--edge);border-radius:3px;font-family:var(--sans);min-width:0}
+.mtc select{flex:1}
+.mtc .tc{font-family:var(--mono);font-size:22px;letter-spacing:.02em;flex:1}
+.mtc .tc.live{color:var(--ok)}
+.mtc .tc.idle{color:var(--dimmer)}
+.mtc .mini{padding:8px 11px;font-size:12.5px;background:var(--card);color:var(--smoke);
+  border:1px solid var(--edge);border-radius:3px;cursor:pointer;font-family:var(--sans);flex:none}
+.mtc .mini.on{background:var(--ok);border-color:var(--ok);color:#0C1417;font-weight:700}
+.cuelist{margin-top:10px;max-height:210px;overflow-y:auto;border:1px solid var(--edge);border-radius:3px}
+.cuelist .c{display:flex;gap:6px;align-items:center;padding:7px 8px;border-bottom:1px solid #23201D}
+.cuelist .c:last-child{border-bottom:0}
+.cuelist .c.next{background:#141E22}
+.cuelist .c.done{opacity:.42}
+.cuelist input.t{width:104px;flex:none;font-family:var(--mono);font-size:12.5px;padding:6px;text-align:center}
+.cuelist select.a{flex:1;font-size:12.5px;padding:6px;min-width:0}
+.cuelist button{flex:none;width:28px;height:28px;padding:0;font-size:13px;background:transparent;
+  border:1px solid var(--edge);color:var(--dimmer);border-radius:3px;cursor:pointer;font-family:var(--sans)}
+.cuelist button:active{border-color:var(--flare);color:var(--flare)}
+.mtc .note{font-size:12px;color:var(--dimmer);line-height:1.5;margin-top:9px}
+.mtc textarea{width:100%;height:110px;font-family:var(--mono);font-size:11.5px;padding:8px;
+  background:var(--card);color:var(--chalk);border:1px solid var(--edge);border-radius:3px;resize:vertical}
 .firstline{display:flex;align-items:center;gap:10px;margin-top:14px;
   padding:12px 14px;border-radius:3px;background:var(--chalk);color:var(--stage)}
 .firstline .bolt{font-size:20px;line-height:1;flex:none}
@@ -627,6 +652,7 @@ async function startHost(code){
   const r=await loadRoom(code);
   if(!r){ alert("No room with that code. Start the big screen first."); return; }
   role="host"; room=code; state=r;
+  loadCues();
   players=await loadPlayers(code);
   subscribe(code, x=>{ state=x; hostView(); },
     ()=>{ paintRoster(); diag(); });
@@ -647,13 +673,18 @@ function hostView(){
     <h2 style="margin-top:12px">${phaseName}</h2>
     <div class="statusgrid">
       <div class="stat tap" id="h-toggle">
-        <div class="l">Players</div>
+        <div class="l">Players · Q${state.qi<0?"–":(state.qi+1)}/${QS.length}</div>
         <div class="v" id="h-count">${players.length}</div>
         <div class="hint" id="h-hint">${showRoster?"tap to hide":"tap to show"}</div>
       </div>
-      <div class="stat"><div class="l">Question</div><div class="v">${state.qi<0?"—":(state.qi+1)+"/"+QS.length}</div></div>
+      <div class="stat tap" id="h-mtc-toggle">
+        <div class="l">Timecode</div>
+        <div class="v" style="font-size:19px">${mtcFollow?"Follow":(midiIn?"Armed":"Off")}</div>
+        <div class="hint">${showMtc?"tap to hide":"tap to set up"}</div>
+      </div>
     </div>
     <div class="roster" id="h-roster"${showRoster?"":" hidden"}></div>
+    ${mtcPanel()}
     ${(ph==="question"||ph==="reveal")?`<div class="qpreview">
       <div style="color:var(--dimmer);font-size:12px;margin-bottom:7px">${q.pts} points · ${q.diff} · ${q.kind} · ${esc(q.song)}</div>
       ${esc(q.q)}
@@ -675,6 +706,13 @@ function hostView(){
   };
   document.getElementById("b-clear").onclick=clearPlayers;
   if(state.phase==="reveal") showFirst();
+  document.getElementById("h-mtc-toggle").onclick=()=>{
+    showMtc=!showMtc;
+    if(showMtc && !cues.length) loadCues();
+    hostView();
+  };
+  wireMtc();
+  if(showMtc) paintCues();
   document.getElementById("h-toggle").onclick=()=>{
     showRoster=!showRoster;
     document.getElementById("h-roster").hidden=!showRoster;
@@ -887,6 +925,253 @@ async function lockIn(i){
   const {error}=await db.from("players")
     .update({score:myScore,updated_at:new Date().toISOString()}).eq("id",meId);
   if(error) fail(error.message);
+}
+
+/* ================================================================
+   MIDI TIME CODE
+   Chrome / Edge on desktop only — Web MIDI does not exist in Safari
+   or on iOS. Manual GO always remains available alongside this.
+================================================================ */
+let midiAccess=null, midiIn=null, mtcFollow=false, showMtc=false;
+let tcMs=null, tcRate=30, tcSeen=0;
+const qf=[0,0,0,0,0,0,0,0];
+let cues=[], firedTo=-1;
+
+const RATES=[24,25,29.97,30];
+
+function tcFormat(ms){
+  if(ms===null) return "--:--:--:--";
+  const f=Math.floor((ms%1000)/(1000/tcRate));
+  const s=Math.floor(ms/1000)%60, m=Math.floor(ms/60000)%60, h=Math.floor(ms/3600000);
+  const p=n=>String(Math.floor(n)).padStart(2,"0");
+  return `${p(h)}:${p(m)}:${p(s)}:${p(f)}`;
+}
+function tcParse(str){
+  const m=/^(\d{1,2}):(\d{2}):(\d{2}):(\d{2})$/.exec((str||"").trim());
+  if(!m) return null;
+  const [,h,mi,se,fr]=m.map(Number);
+  return ((h*60+mi)*60+se)*1000 + fr*(1000/tcRate);
+}
+
+/* ---------- cue storage (host machine only) ---------- */
+function loadCues(){
+  try{ cues=JSON.parse(localStorage.getItem("hh_cues")||"[]"); }catch(e){ cues=[]; }
+  if(!Array.isArray(cues)) cues=[];
+}
+function saveCues(){
+  cues.sort((a,b)=>a.ms-b.ms);
+  try{ localStorage.setItem("hh_cues",JSON.stringify(cues)); }catch(e){}
+}
+
+/* ---------- decode ---------- */
+function onMidi(ev){
+  const d=ev.data;
+
+  /* full-frame: F0 7F <dev> 01 01 hh mm ss ff F7 */
+  if(d[0]===0xF0 && d[1]===0x7F && d[3]===0x01 && d[4]===0x01){
+    const hh=d[5], mm=d[6], ss=d[7], ff=d[8];
+    tcRate=RATES[(hh>>5)&0x03];
+    tcMs=(((hh&0x1F)*60+mm)*60+ss)*1000 + ff*(1000/tcRate);
+    tcSeen=performance.now();
+    onTimecode();
+    return;
+  }
+
+  /* quarter frame: F1 <piece<<4 | value> */
+  if(d[0]===0xF1){
+    const piece=(d[1]>>4)&0x07, val=d[1]&0x0F;
+    qf[piece]=val;
+    if(piece===7){
+      const ff=qf[0] | (qf[1]<<4);
+      const ss=qf[2] | (qf[3]<<4);
+      const mm=qf[4] | (qf[5]<<4);
+      const hh=(qf[6] | ((qf[7]&0x01)<<4));
+      tcRate=RATES[(qf[7]>>1)&0x03];
+      /* a full quarter-frame cycle spans two frames, so the assembled
+         value is two frames behind the sender */
+      tcMs=((hh*60+mm)*60+ss)*1000 + (ff+2)*(1000/tcRate);
+      tcSeen=performance.now();
+      onTimecode();
+    }
+  }
+}
+
+/* ---------- fire cues ---------- */
+async function onTimecode(){
+  paintTc();
+  if(!mtcFollow || !cues.length || tcMs===null) return;
+
+  /* a locate backwards re-arms everything after the new position */
+  const idxNow=cues.filter(c=>c.ms<=tcMs).length-1;
+  if(idxNow<firedTo){ firedTo=idxNow; return; }
+
+  for(let i=firedTo+1;i<cues.length;i++){
+    if(cues[i].ms<=tcMs){
+      firedTo=i;
+      await fireCue(cues[i]);
+    } else break;
+  }
+}
+
+async function fireCue(c){
+  let patch=null;
+  if(c.type==="question") patch={phase:"question",qi:c.qi,started_at:new Date().toISOString()};
+  else if(c.type==="reveal") patch={phase:"reveal"};
+  else if(c.type==="board")  patch={phase:"board"};
+  if(!patch) return;
+  const r=await upsertRoom(room,patch);
+  if(r){ state=r; hostView(); }
+}
+
+/* ---------- connect ---------- */
+async function midiConnect(){
+  if(!navigator.requestMIDIAccess){
+    alert("This browser has no MIDI support.\n\nWeb MIDI works in Chrome and Edge on a desktop. "+
+          "Safari and iOS do not support it, so timecode has to run on the laptop.");
+    return;
+  }
+  try{
+    midiAccess=await navigator.requestMIDIAccess({sysex:true});
+  }catch(e){
+    try{ midiAccess=await navigator.requestMIDIAccess(); }
+    catch(e2){ alert("MIDI access was refused: "+(e2.message||e2)); return; }
+  }
+  midiAccess.onstatechange=()=>hostView();
+  hostView();
+}
+
+function midiSelect(id){
+  if(midiIn) midiIn.onmidimessage=null;
+  midiIn=null; tcMs=null;
+  if(!midiAccess||!id) return paintTc();
+  for(const p of midiAccess.inputs.values()){
+    if(p.id===id){ midiIn=p; p.onmidimessage=onMidi; break; }
+  }
+  paintTc();
+}
+
+function paintTc(){
+  const el=document.getElementById("tc-read");
+  if(!el) return;
+  const live = tcMs!==null && (performance.now()-tcSeen)<400;
+  el.textContent=tcFormat(live?tcMs:tcMs);
+  el.className="tc "+(live?"live":"idle");
+  const st=document.getElementById("tc-state");
+  if(st) st.textContent = live ? `running · ${tcRate}fps` : (midiIn?"no timecode":"no input");
+  paintCues();
+}
+
+function paintCues(){
+  const el=document.getElementById("cuelist");
+  if(!el||!showMtc) return;
+  const nextIx=cues.findIndex(c=>tcMs===null||c.ms>tcMs);
+  el.innerHTML=cues.map((c,i)=>{
+    const label=c.type==="question"?`Question ${c.qi+1}`:(c.type==="reveal"?"Reveal answer":"Show standings");
+    return `<div class="c ${i===nextIx?"next":(tcMs!==null&&c.ms<=tcMs?"done":"")}">
+      <input class="t" data-t="${i}" value="${tcFormat(c.ms)}">
+      <select class="a" data-a="${i}">
+        <option value="reveal"${c.type==="reveal"?" selected":""}>Reveal answer</option>
+        <option value="board"${c.type==="board"?" selected":""}>Show standings</option>
+        ${QS.map((q,n)=>`<option value="q${n}"${c.type==="question"&&c.qi===n?" selected":""}>Question ${n+1}</option>`).join("")}
+      </select>
+      <button data-grab="${i}" title="Set to the timecode showing now">&#9679;</button>
+      <button data-del="${i}" title="Delete this cue">&times;</button>
+    </div>`;
+  }).join("") || `<div style="padding:12px;color:var(--dimmer);font-size:13px">No cues yet. Add one below.</div>`;
+
+  el.querySelectorAll("[data-t]").forEach(inp=>inp.onchange=()=>{
+    const ms=tcParse(inp.value);
+    if(ms===null){ alert("Use HH:MM:SS:FF, for example 01:02:15:00"); paintCues(); return; }
+    cues[inp.dataset.t].ms=ms; saveCues(); paintCues();
+  });
+  el.querySelectorAll("[data-a]").forEach(sel=>sel.onchange=()=>{
+    const c=cues[sel.dataset.a], v=sel.value;
+    if(v==="reveal"||v==="board"){ c.type=v; delete c.qi; }
+    else { c.type="question"; c.qi=+v.slice(1); }
+    saveCues(); paintCues();
+  });
+  el.querySelectorAll("[data-grab]").forEach(b=>b.onclick=()=>{
+    if(tcMs===null) return alert("No timecode is arriving yet.");
+    cues[b.dataset.grab].ms=tcMs; saveCues(); paintCues();
+  });
+  el.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+    cues.splice(b.dataset.del,1); saveCues(); paintCues();
+  });
+}
+
+function mtcPanel(){
+  const inputs = midiAccess ? [...midiAccess.inputs.values()] : [];
+  return `<div class="mtc" id="mtc-panel"${showMtc?"":" hidden"}>
+    ${!midiAccess ? `
+      <button class="mini" id="tc-connect" style="width:100%">Connect to MIDI</button>
+      <p class="note">Chrome or Edge on a desktop only. Safari and iOS have no Web MIDI, so
+        timecode nights need the host controls on the laptop.</p>`
+    : `
+      <div class="row">
+        <select id="tc-input">
+          <option value="">Choose a MIDI input…</option>
+          ${inputs.map(p=>`<option value="${esc(p.id)}"${midiIn&&midiIn.id===p.id?" selected":""}>${esc(p.name)}</option>`).join("")}
+        </select>
+      </div>
+      <div class="row">
+        <span class="tc idle" id="tc-read">--:--:--:--</span>
+        <button class="mini ${mtcFollow?"on":""}" id="tc-follow">${mtcFollow?"Following":"Follow off"}</button>
+      </div>
+      <div class="row"><span class="note" id="tc-state" style="margin:0">no input</span></div>
+      <div class="cuelist" id="cuelist"></div>
+      <div class="row" style="margin-top:9px">
+        <button class="mini" id="cue-add">Add cue</button>
+        <button class="mini" id="cue-io">Import / export</button>
+      </div>
+      <div id="cue-io-box" hidden style="margin-top:9px">
+        <textarea id="cue-text" spellcheck="false"></textarea>
+        <div class="row" style="margin-top:7px">
+          <button class="mini" id="cue-load">Replace cues with this</button>
+        </div>
+      </div>
+      <p class="note">Cues live on this computer only, not in the database. Export them if you
+        want a copy. The GO button keeps working while Follow is on.</p>`}
+  </div>`;
+}
+
+function wireMtc(){
+  const c=document.getElementById("tc-connect");
+  if(c) c.onclick=midiConnect;
+  const sel=document.getElementById("tc-input");
+  if(sel) sel.onchange=()=>midiSelect(sel.value);
+  const f=document.getElementById("tc-follow");
+  if(f) f.onclick=()=>{
+    mtcFollow=!mtcFollow;
+    if(mtcFollow) firedTo=cues.filter(x=>tcMs!==null&&x.ms<=tcMs).length-1;
+    hostView();
+  };
+  const add=document.getElementById("cue-add");
+  if(add) add.onclick=()=>{
+    cues.push({ms:tcMs===null?0:tcMs, type:"question", qi:Math.max(0,state.qi+1)});
+    saveCues(); paintCues();
+  };
+  const io=document.getElementById("cue-io");
+  if(io) io.onclick=()=>{
+    const box=document.getElementById("cue-io-box");
+    box.hidden=!box.hidden;
+    if(!box.hidden) document.getElementById("cue-text").value=
+      cues.map(c=>`${tcFormat(c.ms)}  ${c.type==="question"?"q"+(c.qi+1):c.type}`).join("\n");
+  };
+  const load=document.getElementById("cue-load");
+  if(load) load.onclick=()=>{
+    const out=[];
+    for(const line of document.getElementById("cue-text").value.split("\n")){
+      const t=line.trim(); if(!t) continue;
+      const m=/^(\d{1,2}:\d{2}:\d{2}:\d{2})\s+(q\d+|reveal|board)$/i.exec(t);
+      if(!m){ alert("Couldn't read this line:\n"+t+"\n\nExpected: 01:02:15:00  q7"); return; }
+      const ms=tcParse(m[1]); if(ms===null) return alert("Bad timecode: "+m[1]);
+      const a=m[2].toLowerCase();
+      out.push(a[0]==="q" ? {ms,type:"question",qi:parseInt(a.slice(1),10)-1} : {ms,type:a});
+    }
+    cues=out; saveCues(); paintCues();
+    document.getElementById("cue-io-box").hidden=true;
+  };
+  paintTc();
 }
 
 /* ---------- the host cleared the room ---------- */
